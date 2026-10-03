@@ -1,0 +1,220 @@
+.questions-list-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  overflow: hidden;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: white;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #e0e0e0;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+  flex: 1;
+}
+
+.count {
+  padding: 6px 12px;
+  background: #f0f0f0;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+}
+
+.table-container {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 16px;
+  color: #666;
+}
+
+.error-message {
+  padding: 12px;
+  background-color: #ffebee;
+  color: #c62828;
+  border-radius: 4px;
+  border-left: 4px solid #c62828;
+  margin: 20px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+}
+
+.empty-state p {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.empty-state p:first-child {
+  font-weight: 500;
+  font-size: 18px;
+  color: #666;
+}
+
+.questions-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.questions-table thead {
+  background: #f9f9f9;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.questions-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.questions-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: all 0.2s;
+}
+
+.questions-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.questions-table td {
+  padding: 12px 16px;
+  color: #333;
+  font-size: 14px;
+}
+
+.title-cell {
+  font-weight: 500;
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.type-cell {
+  color: #666;
+  font-size: 13px;
+}
+
+.difficulty-cell {
+  text-align: center;
+}
+
+.difficulty-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.edit-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #45a049;
+}
+
+.delete-btn {
+  background: #f5f5f5;
+  color: #c62828;
+  border: 1px solid #e0e0e0;
+}
+
+.delete-btn:hover {
+  background: #ffebee;
+  border-color: #c62828;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-header h1 {
+    flex: none;
+  }
+
+  .questions-table th,
+  .questions-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .title-cell {
+    max-width: 150px;
+  }
+
+  .action-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}

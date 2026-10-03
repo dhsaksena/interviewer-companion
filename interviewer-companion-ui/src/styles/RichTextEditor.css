@@ -1,0 +1,246 @@
+.rich-editor-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.2s;
+  min-width: 36px;
+  height: 32px;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.toolbar-btn:active:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toolbar-btn svg {
+  font-size: 18px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: #ddd;
+  margin: 0 4px;
+}
+
+.color-picker-wrapper {
+  position: relative;
+}
+
+.color-picker-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  z-index: 1000;
+  margin-top: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.color-picker-popup input[type="color"] {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.color-swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.color-swatch:hover {
+  border-color: #333;
+  transform: scale(1.1);
+}
+
+.code-selector-wrapper {
+  position: relative;
+}
+
+.language-selector-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  z-index: 1000;
+  margin-top: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 120px;
+}
+
+.language-option {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.language-option:last-child {
+  border-bottom: none;
+}
+
+.language-option:hover {
+  background: #f0f0f0;
+}
+
+.language-option:active {
+  background: #e0e0e0;
+}
+
+.editor-content {
+  flex: 1;
+  padding: 10px 12px;
+  min-height: 300px;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  word-wrap: break-word;
+  overflow-y: auto;
+  text-align: left;
+  white-space: normal;
+}
+
+.editor-content > * {
+  text-align: left;
+  margin: 8px 0;
+}
+
+.editor-content > p {
+  margin: 4px 0;
+}
+
+.editor-content > div {
+  text-align: left;
+}
+
+.editor-content:empty:before {
+  content: attr(data-placeholder);
+  color: #999;
+  pointer-events: none;
+  display: block;
+  text-align: left;
+}
+
+.editor-content[contenteditable="false"] {
+  background-color: #f5f5f5;
+  color: #999;
+}
+
+.code-block {
+  background: #282c34;
+  color: #abb2bf;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.code-block code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+/* Rich text formatting styles */
+.editor-content b,
+.editor-content strong {
+  font-weight: bold;
+}
+
+.editor-content i,
+.editor-content em {
+  font-style: italic;
+}
+
+.editor-content u {
+  text-decoration: underline;
+}
+
+.editor-content ul,
+.editor-content ol {
+  margin-left: 24px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.editor-content li {
+  margin-bottom: 2px;
+  text-align: left;
+}
+
+.editor-content br {
+  display: block;
+  height: 0;
+}
+
+.editor-content pre {
+  text-align: left;
+  margin: 8px 0;
+}
