@@ -93,20 +93,36 @@
   color: #666;
 }
 
+/* Grid table: every cell is bordered, columns have fixed widths so header and
+   body line up. Title is left-aligned in header and cells; all other columns
+   are centered in both. */
 .questions-table {
   width: 100%;
+  min-width: 760px;
+  table-layout: fixed;
   border-collapse: collapse;
   background: white;
+  border: 1px solid #d0d0d0;
 }
 
+.questions-table .col-sno { width: 80px; }
+.questions-table .col-type { width: 140px; }
+.questions-table .col-difficulty { width: 130px; }
+.questions-table .col-actions { width: 220px; }
+
 .questions-table thead {
-  background: #f9f9f9;
-  border-bottom: 2px solid #e0e0e0;
+  background: #f3f4f6;
+}
+
+.questions-table th,
+.questions-table td {
+  padding: 12px 16px;
+  border: 1px solid #d0d0d0;
+  vertical-align: middle;
+  text-align: left;
 }
 
 .questions-table th {
-  padding: 12px 16px;
-  text-align: left;
   font-weight: 600;
   color: #333;
   font-size: 13px;
@@ -114,8 +130,15 @@
   letter-spacing: 0.5px;
 }
 
+.questions-table th.center,
+.questions-table td.sno-cell,
+.questions-table td.type-cell,
+.questions-table td.difficulty-cell,
+.questions-table td.actions-cell {
+  text-align: center;
+}
+
 .questions-table tbody tr {
-  border-bottom: 1px solid #e0e0e0;
   transition: all 0.2s;
 }
 
@@ -124,26 +147,44 @@
 }
 
 .questions-table td {
-  padding: 12px 16px;
   color: #333;
   font-size: 14px;
 }
 
+.sno-cell {
+  color: #666;
+  font-weight: 500;
+}
+
 .title-cell {
   font-weight: 500;
-  max-width: 400px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title-link {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #0066ff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title-link:hover {
+  text-decoration: underline;
 }
 
 .type-cell {
   color: #666;
   font-size: 13px;
-}
-
-.difficulty-cell {
-  text-align: center;
 }
 
 .difficulty-badge {
@@ -155,8 +196,10 @@
   font-weight: 600;
 }
 
-.actions-cell {
+/* Flex lives on an inner wrapper; display:flex on the <td> itself breaks table layout */
+.actions-wrap {
   display: flex;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -207,10 +250,6 @@
   .questions-table td {
     padding: 8px 10px;
     font-size: 12px;
-  }
-
-  .title-cell {
-    max-width: 150px;
   }
 
   .action-btn {

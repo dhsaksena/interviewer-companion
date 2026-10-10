@@ -51,7 +51,7 @@ export class QuestionsService {
         params.push(...filters.type)
       }
 
-      query += ' ORDER BY q.created_at DESC'
+      query += ' ORDER BY q.id ASC'
 
       const [questions] = await connection.query(query, params)
       return questions as Question[]
@@ -60,7 +60,7 @@ export class QuestionsService {
     }
   }
 
-  async getQuestionById(id: string): Promise<Question | null> {
+  async getQuestionById(id: number): Promise<Question | null> {
     const pool = getPool()
     const connection = await pool.getConnection()
 
@@ -119,15 +119,12 @@ export class QuestionsService {
         throw new Error('Category ID and Subcategory ID are required')
       }
 
-      const id = `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-      await connection.query(
+      const [result] = await connection.query(
         `INSERT INTO questions (
-          id, title, description, difficulty, type, category_id, subcategory_id,
+          title, description, difficulty, type, category_id, subcategory_id,
           solution, solution_image_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          id,
           input.title,
           input.description,
           input.difficulty,
@@ -139,7 +136,7 @@ export class QuestionsService {
         ]
       )
 
-      const question = await this.getQuestionById(id)
+      const question = await this.getQuestionById((result as { insertId: number }).insertId)
       if (!question) {
         throw new Error('Failed to create question')
       }
@@ -151,7 +148,7 @@ export class QuestionsService {
   }
 
   async updateQuestion(
-    id: string,
+    id: number,
     input: UpdateQuestionInput
   ): Promise<Question | null> {
     const pool = getPool()
@@ -246,7 +243,7 @@ export class QuestionsService {
     }
   }
 
-  async deleteQuestion(id: string): Promise<boolean> {
+  async deleteQuestion(id: number): Promise<boolean> {
     const pool = getPool()
     const connection = await pool.getConnection()
 

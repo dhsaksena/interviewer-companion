@@ -6,10 +6,11 @@ import type { Question } from '../types'
 interface QuestionsListPageProps {
   selectedSubcategory: string
   onBack: () => void
-  onSelectQuestion: (questionId: string) => void
+  onSelectQuestion: (questionId: number) => void
+  onViewQuestion: (questionId: number) => void
 }
 
-const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion }: QuestionsListPageProps) => {
+const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion, onViewQuestion }: QuestionsListPageProps) => {
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,7 +38,7 @@ const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion }: Qu
     }
   }
 
-  const handleDelete = async (questionId: string) => {
+  const handleDelete = async (questionId: number) => {
     if (!confirm('Are you sure you want to delete this question?')) return
 
     try {
@@ -85,18 +86,36 @@ const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion }: Qu
             </div>
           ) : (
             <table className="questions-table">
+              <colgroup>
+                <col className="col-sno" />
+                <col className="col-title" />
+                <col className="col-type" />
+                <col className="col-difficulty" />
+                <col className="col-actions" />
+              </colgroup>
               <thead>
                 <tr>
+                  <th className="center">S.No</th>
                   <th>Title</th>
-                  <th>Type</th>
-                  <th>Difficulty</th>
-                  <th>Actions</th>
+                  <th className="center">Type</th>
+                  <th className="center">Difficulty</th>
+                  <th className="center">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {questions.map(question => (
                   <tr key={question.id}>
-                    <td className="title-cell">{question.title}</td>
+                    <td className="sno-cell">{question.id}</td>
+                    <td className="title-cell">
+                      <button
+                        type="button"
+                        className="title-link"
+                        onClick={() => onViewQuestion(question.id)}
+                        title={question.title}
+                      >
+                        {question.title}
+                      </button>
+                    </td>
                     <td className="type-cell">{question.type}</td>
                     <td className="difficulty-cell">
                       <span
@@ -107,20 +126,22 @@ const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion }: Qu
                       </span>
                     </td>
                     <td className="actions-cell">
-                      <button
-                        className="action-btn edit-btn"
-                        onClick={() => onSelectQuestion(question.id)}
-                        title="Edit question"
-                      >
-                        <MdEdit /> Edit
-                      </button>
-                      <button
-                        className="action-btn delete-btn"
-                        onClick={() => handleDelete(question.id)}
-                        title="Delete question"
-                      >
-                        <MdDelete /> Delete
-                      </button>
+                      <div className="actions-wrap">
+                        <button
+                          className="action-btn edit-btn"
+                          onClick={() => onSelectQuestion(question.id)}
+                          title="Edit question"
+                        >
+                          <MdEdit /> Edit
+                        </button>
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={() => handleDelete(question.id)}
+                          title="Delete question"
+                        >
+                          <MdDelete /> Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -4,8 +4,9 @@ import Sidebar from './components/Sidebar'
 import AddQuestionPage from './pages/AddQuestionPage'
 import QuestionsListPage from './pages/QuestionsListPage'
 import QuestionEditPage from './pages/QuestionEditPage'
+import QuestionViewPage from './pages/QuestionViewPage'
 
-type PageType = 'home' | 'add-question' | 'questions-list' | 'edit-question'
+type PageType = 'home' | 'add-question' | 'questions-list' | 'edit-question' | 'view-question'
 
 function App()
 {
@@ -15,7 +16,7 @@ function App()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState<PageType>('home')
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
-  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null)
 
   const handleBackToHome = () => {
     setCurrentPage('home')
@@ -28,9 +29,14 @@ function App()
     setCurrentPage('questions-list')
   }
 
-  const handleSelectQuestion = (questionId: string) => {
+  const handleSelectQuestion = (questionId: number) => {
     setSelectedQuestionId(questionId)
     setCurrentPage('edit-question')
+  }
+
+  const handleViewQuestion = (questionId: number) => {
+    setSelectedQuestionId(questionId)
+    setCurrentPage('view-question')
   }
 
   return (
@@ -40,6 +46,9 @@ function App()
         onSelectCategory={setSelectedCategory}
         onAddQuestion={() => setCurrentPage('add-question')}
         onSelectSubcategory={handleSelectSubcategory}
+        onSubcategoryDeleted={name => {
+          if (name === selectedSubcategory) handleBackToHome()
+        }}
       />
 
       {currentPage === 'home' && (
@@ -57,6 +66,15 @@ function App()
           selectedSubcategory={selectedSubcategory}
           onBack={handleBackToHome}
           onSelectQuestion={handleSelectQuestion}
+          onViewQuestion={handleViewQuestion}
+        />
+      )}
+
+      {currentPage === 'view-question' && selectedQuestionId && (
+        <QuestionViewPage
+          questionId={selectedQuestionId}
+          onBack={() => setCurrentPage('questions-list')}
+          onEdit={handleSelectQuestion}
         />
       )}
 

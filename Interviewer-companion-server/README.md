@@ -83,7 +83,12 @@ The server will be available at `http://localhost:3001`
 - `GET /api/categories/:id` - Get a specific category
 - `POST /api/categories` - Create a new category
 - `PUT /api/categories/:id` - Update a category
-- `DELETE /api/categories/:id` - Delete a category
+- `DELETE /api/categories/:id` - Delete a category (409 if it still has questions)
+- `POST /api/categories/:id/subcategories` - Add a subcategory (`{ "name": "..." }`)
+- `PUT /api/subcategories/:id` - Rename a subcategory
+- `DELETE /api/subcategories/:id` - Delete a subcategory (409 if it still has questions)
+
+Duplicate names return 409; blank names return 400.
 
 ### Questions
 - `GET /api/questions` - Get all questions with optional filters
