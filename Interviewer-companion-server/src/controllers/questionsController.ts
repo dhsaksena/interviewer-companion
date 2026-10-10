@@ -2,6 +2,14 @@ import { Request, Response, NextFunction } from 'express'
 import { QuestionsService } from '../services/questionsService.js'
 import { AppError } from '../middleware/errorHandler.js'
 
+const parseQuestionId = (value: string): number => {
+  const id = Number(value)
+  if (!Number.isInteger(id) || id < 1) {
+    throw new AppError(400, 'Invalid question id')
+  }
+  return id
+}
+
 export class QuestionsController {
   private service = new QuestionsService()
 
@@ -24,7 +32,7 @@ export class QuestionsController {
   async getQuestionById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params
-      const question = await this.service.getQuestionById(id)
+      const question = await this.service.getQuestionById(parseQuestionId(id))
       if (!question) {
         throw new AppError(404, 'Question not found')
       }
@@ -70,7 +78,7 @@ export class QuestionsController {
         solutionImageUrl = `/uploads/${req.file.filename}`
       }
 
-      const question = await this.service.updateQuestion(id, {
+      const question = await this.service.updateQuestion(parseQuestionId(id), {
         title,
         description,
         difficulty,
@@ -93,7 +101,7 @@ export class QuestionsController {
   async deleteQuestion(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params
-      const success = await this.service.deleteQuestion(id)
+      const success = await this.service.deleteQuestion(parseQuestionId(id))
       if (!success) {
         throw new AppError(404, 'Question not found')
       }

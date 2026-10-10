@@ -17,7 +17,7 @@ interface FormData {
 }
 
 interface QuestionEditPageProps {
-  questionId: string
+  questionId: number
   onBack: () => void
 }
 

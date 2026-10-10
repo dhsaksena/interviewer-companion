@@ -23,6 +23,14 @@ export const errorHandler = (
     })
   }
 
+  // Unique-key violation (duplicate category or subcategory name)
+  if ((err as NodeJS.ErrnoException).code === 'ER_DUP_ENTRY') {
+    return res.status(409).json({
+      error: 'An item with this name already exists',
+      statusCode: 409,
+    })
+  }
+
   console.error(err)
   return res.status(500).json({
     error: 'Internal server error',

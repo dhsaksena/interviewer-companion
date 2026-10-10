@@ -1,5 +1,56 @@
 import mysql from 'mysql2/promise'
 
+const questionsTableDdl = (tableName: string) => `
+  CREATE TABLE IF NOT EXISTS ${tableName} (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(500) NOT NULL,
+    description LONGTEXT NOT NULL,
+    difficulty VARCHAR(20) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    category_id INT NOT NULL,
+    subcategory_id INT NOT NULL,
+    solution LONGTEXT,
+    solution_image_url VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+    FOREIGN KEY (subcategory_id) REFERENCES subcategories(id) ON DELETE CASCADE,
+    INDEX idx_category_id (category_id),
+    INDEX idx_subcategory_id (subcategory_id),
+    INDEX idx_difficulty (difficulty)
+  )
+`
+
+const QUESTION_COLUMNS =
+  'title, description, difficulty, type, category_id, subcategory_id, solution, solution_image_url, created_at, updated_at'
+const LEGACY_QUESTIONS_TABLE = 'questions_legacy_varchar_id'
+
+// Older databases have questions.id as a VARCHAR (e.g. "q_1791039140445_k3j2h1x9a").
+// Rebuild the table with an INT AUTO_INCREMENT id, numbering questions oldest-first.
+// The new table is built and filled under a temporary name and swapped in with a single
+// atomic RENAME, so a failure part-way leaves the original table untouched. The original
+// is kept as a backup table rather than dropped.
+const migrateQuestionIdsToInt = async (connection: mysql.Connection, dbName: string) => {
+  const [columns] = await connection.query<mysql.RowDataPacket[]>(
+    `SELECT DATA_TYPE FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'questions' AND COLUMN_NAME = 'id'`,
+    [dbName]
+  )
+  if (columns.length === 0 || columns[0].DATA_TYPE !== 'varchar') return
+
+  await connection.query('DROP TABLE IF EXISTS questions_new')
+  await connection.query(questionsTableDdl('questions_new'))
+  await connection.query(
+    `INSERT INTO questions_new (${QUESTION_COLUMNS})
+     SELECT ${QUESTION_COLUMNS} FROM questions ORDER BY created_at ASC, id ASC`
+  )
+  await connection.query(`RENAME TABLE questions TO ${LEGACY_QUESTIONS_TABLE}, questions_new TO questions`)
+
+  console.log(
+    `Migrated questions.id to INT AUTO_INCREMENT. Original table kept as ${LEGACY_QUESTIONS_TABLE}`
+  )
+}
+
 export const initializeDatabase = async () => {
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
@@ -36,26 +87,8 @@ export const initializeDatabase = async () => {
       )
     `)
 
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS questions (
-        id VARCHAR(100) PRIMARY KEY,
-        title VARCHAR(500) NOT NULL,
-        description LONGTEXT NOT NULL,
-        difficulty VARCHAR(20) NOT NULL,
-        type VARCHAR(50) NOT NULL,
-        category_id INT NOT NULL,
-        subcategory_id INT NOT NULL,
-        solution LONGTEXT,
-        solution_image_url VARCHAR(500),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
-        FOREIGN KEY (subcategory_id) REFERENCES subcategories(id) ON DELETE CASCADE,
-        INDEX idx_category_id (category_id),
-        INDEX idx_subcategory_id (subcategory_id),
-        INDEX idx_difficulty (difficulty)
-      )
-    `)
+    await migrateQuestionIdsToInt(connection, dbName)
+    await connection.query(questionsTableDdl('questions'))
 
     const [categories] = await connection.query(
       'SELECT COUNT(*) as count FROM categories'

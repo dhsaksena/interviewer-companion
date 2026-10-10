@@ -1,5 +1,7 @@
+import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { getPool } from '../database/connection.js'
-import { Category, CreateCategoryInput, UpdateCategoryInput } from '../types/category.js'
+import { AppError } from '../middleware/errorHandler.js'
+import { Category, CreateCategoryInput, Subcategory, UpdateCategoryInput } from '../types/category.js'
 
 export class CategoriesService {
   async getAllCategories(): Promise<Category[]> {
@@ -144,14 +146,73 @@ export class CategoriesService {
 
   async deleteCategory(id: number): Promise<boolean> {
     const pool = getPool()
-    const connection = await pool.getConnection()
 
-    try {
-      const [result] = await connection.query('DELETE FROM categories WHERE id = ?', [id])
-      const deleteResult = result as { affectedRows: number }
-      return deleteResult.affectedRows > 0
-    } finally {
-      connection.release()
+    // The questions FK cascades on delete, so refuse rather than silently remove questions
+    const [countRows] = await pool.query<RowDataPacket[]>(
+      'SELECT COUNT(*) AS count FROM questions WHERE category_id = ?',
+      [id]
+    )
+    const questionCount = Number(countRows[0].count)
+    if (questionCount > 0) {
+      throw new AppError(
+        409,
+        `Category has ${questionCount} question(s). Move or delete them before deleting the category.`
+      )
     }
+
+    const [result] = await pool.query<ResultSetHeader>('DELETE FROM categories WHERE id = ?', [id])
+    return result.affectedRows > 0
+  }
+
+  async getSubcategoryById(id: number): Promise<Subcategory | null> {
+    const pool = getPool()
+    const [rows] = await pool.query<RowDataPacket[]>(
+      'SELECT id, category_id, name, created_at, updated_at FROM subcategories WHERE id = ?',
+      [id]
+    )
+    return (rows[0] as Subcategory) ?? null
+  }
+
+  async createSubcategory(categoryId: number, name: string): Promise<Subcategory | null> {
+    const pool = getPool()
+    const [categoryRows] = await pool.query<RowDataPacket[]>(
+      'SELECT id FROM categories WHERE id = ?',
+      [categoryId]
+    )
+    if (categoryRows.length === 0) return null
+
+    const [result] = await pool.query<ResultSetHeader>(
+      'INSERT INTO subcategories (category_id, name) VALUES (?, ?)',
+      [categoryId, name]
+    )
+    return this.getSubcategoryById(result.insertId)
+  }
+
+  async updateSubcategory(id: number, name: string): Promise<Subcategory | null> {
+    const pool = getPool()
+    const existing = await this.getSubcategoryById(id)
+    if (!existing) return null
+
+    await pool.query('UPDATE subcategories SET name = ? WHERE id = ?', [name, id])
+    return this.getSubcategoryById(id)
+  }
+
+  async deleteSubcategory(id: number): Promise<boolean> {
+    const pool = getPool()
+
+    const [countRows] = await pool.query<RowDataPacket[]>(
+      'SELECT COUNT(*) AS count FROM questions WHERE subcategory_id = ?',
+      [id]
+    )
+    const questionCount = Number(countRows[0].count)
+    if (questionCount > 0) {
+      throw new AppError(
+        409,
+        `Subcategory has ${questionCount} question(s). Move or delete them before deleting the subcategory.`
+      )
+    }
+
+    const [result] = await pool.query<ResultSetHeader>('DELETE FROM subcategories WHERE id = ?', [id])
+    return result.affectedRows > 0
   }
 }

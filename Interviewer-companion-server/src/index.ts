@@ -10,6 +10,7 @@ import { initializeDatabase } from './database/init.js'
 import healthRouter from './routes/health.js'
 import questionsRouter from './routes/questions.js'
 import categoriesRouter from './routes/categories.js'
+import subcategoriesRouter from './routes/subcategories.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -36,6 +37,7 @@ app.use(
 app.use('/api/health', healthRouter)
 app.use('/api/questions', questionsRouter)
 app.use('/api/categories', categoriesRouter)
+app.use('/api/subcategories', subcategoriesRouter)
 
 app.use(errorHandler)
 

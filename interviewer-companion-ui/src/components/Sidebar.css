@@ -1,3 +1,33 @@
+.sidebar-wrapper {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+}
+
+/* The wrapper owns the width (App.css gives .sidebar a fixed 200px) */
+.sidebar-wrapper .sidebar {
+  width: 100%;
+  min-width: 0;
+}
+
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+  touch-action: none;
+  transition: background 0.15s ease;
+}
+
+.sidebar-resizer:hover,
+.sidebar-resizer:focus-visible {
+  background: rgba(0, 102, 255, 0.5);
+  outline: none;
+}
+
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -203,4 +233,57 @@
 
 .add-question-btn:active {
   transform: scale(0.98);
+}
+
+.subcategory-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-hint {
+  margin: 0;
+  padding: 6px 10px 6px 28px;
+  font-size: 12px;
+  color: #555;
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.category-header:hover .item-actions,
+.subcategory-item:hover .item-actions,
+.item-actions:focus-within {
+  opacity: 1;
+}
+
+.item-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #8a8a8a;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.item-action-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.item-action-btn.danger:hover {
+  color: #ff6b6b;
 }
