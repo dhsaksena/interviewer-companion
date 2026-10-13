@@ -5,14 +5,13 @@ import AddQuestionPage from './pages/AddQuestionPage'
 import QuestionsListPage from './pages/QuestionsListPage'
 import QuestionEditPage from './pages/QuestionEditPage'
 import QuestionViewPage from './pages/QuestionViewPage'
+import HomePage from './pages/HomePage'
 
 type PageType = 'home' | 'add-question' | 'questions-list' | 'edit-question' | 'view-question'
 
 function App()
 {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>(['All'])
-  const [selectedType, setSelectedType] = useState<string[]>(['All'])
-  const [searchQuery, setSearchQuery] = useState('')
+  // Name of the subcategory highlighted in the sidebar
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState<PageType>('home')
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
@@ -20,11 +19,20 @@ function App()
 
   const handleBackToHome = () => {
     setCurrentPage('home')
+    setSelectedCategory(null)
     setSelectedSubcategory(null)
     setSelectedQuestionId(null)
   }
 
+  const handleShowAll = () => {
+    setSelectedCategory(null)
+    setSelectedSubcategory(null)
+    setSelectedQuestionId(null)
+    setCurrentPage('questions-list')
+  }
+
   const handleSelectSubcategory = (subcategory: string) => {
+    setSelectedCategory(subcategory)
     setSelectedSubcategory(subcategory)
     setCurrentPage('questions-list')
   }
@@ -39,41 +47,47 @@ function App()
     setCurrentPage('view-question')
   }
 
+  // The list page is shared by "All questions" (no subcategory) and a single subcategory
+  const backToList = () => setCurrentPage('questions-list')
+
+  const activeNav = currentPage === 'home' ? 'home' : currentPage === 'questions-list' && !selectedSubcategory ? 'all' : null
+
   return (
     <div className="app-container">
       <Sidebar
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
-        onAddQuestion={() => setCurrentPage('add-question')}
         onSelectSubcategory={handleSelectSubcategory}
         onSubcategoryDeleted={name => {
           if (name === selectedSubcategory) handleBackToHome()
         }}
+        activeNav={activeNav}
+        onGoHome={handleBackToHome}
+        onShowAll={handleShowAll}
       />
 
       {currentPage === 'home' && (
-        <div className="main-content">
-          {/* Questions list will go here */}
-        </div>
+        <HomePage onSelectSubcategory={handleSelectSubcategory} onShowAll={handleShowAll} />
       )}
 
       {currentPage === 'add-question' && (
-        <AddQuestionPage onBack={handleBackToHome} />
+        <AddQuestionPage onBack={backToList} initialSubcategory={selectedSubcategory} />
       )}
 
-      {currentPage === 'questions-list' && selectedSubcategory && (
+      {currentPage === 'questions-list' && (
         <QuestionsListPage
           selectedSubcategory={selectedSubcategory}
           onBack={handleBackToHome}
           onSelectQuestion={handleSelectQuestion}
           onViewQuestion={handleViewQuestion}
+          onAddQuestion={() => setCurrentPage('add-question')}
         />
       )}
 
       {currentPage === 'view-question' && selectedQuestionId && (
         <QuestionViewPage
           questionId={selectedQuestionId}
-          onBack={() => setCurrentPage('questions-list')}
+          onBack={backToList}
           onEdit={handleSelectQuestion}
         />
       )}
@@ -81,7 +95,7 @@ function App()
       {currentPage === 'edit-question' && selectedQuestionId && (
         <QuestionEditPage
           questionId={selectedQuestionId}
-          onBack={() => setCurrentPage('questions-list')}
+          onBack={backToList}
         />
       )}
     </div>

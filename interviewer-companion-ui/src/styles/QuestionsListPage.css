@@ -1,167 +1,103 @@
-.questions-list-page {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: white;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
-.page-header {
+.list-toolbar {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
-  background: white;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
-.back-btn {
+.search-box {
+  flex: 1;
+  min-width: 220px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: #f5f5f5;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.back-btn:hover {
-  background: #e0e0e0;
-}
-
-.page-header h1 {
-  margin: 0;
-  font-size: 24px;
-  color: #333;
-  flex: 1;
-}
-
-.count {
-  padding: 6px 12px;
-  background: #f0f0f0;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #666;
-}
-
-.table-container {
-  flex: 1;
-  padding: 20px;
-  overflow: auto;
-}
-
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 16px;
-  color: #666;
-}
-
-.error-message {
-  padding: 12px;
-  background-color: #ffebee;
-  color: #c62828;
-  border-radius: 4px;
-  border-left: 4px solid #c62828;
-  margin: 20px;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #999;
-}
-
-.empty-state p {
-  margin: 8px 0;
-  font-size: 16px;
-}
-
-.empty-state p:first-child {
-  font-weight: 500;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink-3);
   font-size: 18px;
-  color: #666;
 }
 
-/* Grid table: every cell is bordered, columns have fixed widths so header and
-   body line up. Title is left-aligned in header and cells; all other columns
-   are centered in both. */
+.search-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.15);
+}
+
+.search-box input {
+  flex: 1;
+  padding: 9px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-md);
+}
+
+.list-toolbar select {
+  padding: 9px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--fs-md);
+}
+
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
 .questions-table {
   width: 100%;
-  min-width: 760px;
+  min-width: 640px;
   table-layout: fixed;
   border-collapse: collapse;
-  background: white;
-  border: 1px solid #d0d0d0;
 }
 
-.questions-table .col-sno { width: 80px; }
-.questions-table .col-type { width: 140px; }
-.questions-table .col-difficulty { width: 130px; }
-.questions-table .col-actions { width: 220px; }
-
-.questions-table thead {
-  background: #f3f4f6;
-}
-
-.questions-table th,
-.questions-table td {
-  padding: 12px 16px;
-  border: 1px solid #d0d0d0;
-  vertical-align: middle;
-  text-align: left;
-}
+.questions-table .col-num { width: 56px; }
+.questions-table .col-type { width: 130px; }
+.questions-table .col-difficulty { width: 120px; }
+.questions-table .col-actions { width: 96px; }
 
 .questions-table th {
-  font-weight: 600;
-  color: #333;
-  font-size: 13px;
+  padding: 11px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.questions-table th.center,
-.questions-table td.sno-cell,
-.questions-table td.type-cell,
-.questions-table td.difficulty-cell,
-.questions-table td.actions-cell {
-  text-align: center;
-}
-
-.questions-table tbody tr {
-  transition: all 0.2s;
-}
-
-.questions-table tbody tr:hover {
-  background: #f9f9f9;
+  color: var(--ink-3);
 }
 
 .questions-table td {
-  color: #333;
-  font-size: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  font-size: var(--fs-md);
 }
 
-.sno-cell {
-  color: #666;
-  font-weight: 500;
-}
+.questions-table tbody tr:last-child td { border-bottom: none; }
+.questions-table tbody tr:hover { background: var(--surface-2); }
 
-.title-cell {
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.num-cell { color: var(--ink-3); }
+.type-cell { color: var(--ink-2); font-size: var(--fs-sm); }
+
+.title-cell { overflow: hidden; }
 
 .title-link {
   display: block;
@@ -169,8 +105,9 @@
   padding: 0;
   background: none;
   border: none;
-  color: #0066ff;
+  color: var(--ink);
   font: inherit;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
   overflow: hidden;
@@ -178,82 +115,55 @@
   white-space: nowrap;
 }
 
-.title-link:hover {
-  text-decoration: underline;
-}
+.title-link:hover { color: var(--accent); }
 
-.type-cell {
-  color: #666;
-  font-size: 13px;
-}
-
-.difficulty-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* Flex lives on an inner wrapper; display:flex on the <td> itself breaks table layout */
-.actions-wrap {
+.row-actions {
   display: flex;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
 }
 
-.action-btn {
+.questions-table tr:hover .row-actions,
+.row-actions:focus-within { opacity: 1; }
+
+@media (hover: none) {
+  .row-actions { opacity: 1; }
+}
+
+.filter-note {
+  margin-top: 10px;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+
+.fab {
+  position: absolute;
+  right: 28px;
+  bottom: 28px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
+  gap: 6px;
+  height: 52px;
+  padding: 0 22px 0 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--fs-md);
+  font-weight: 600;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s;
+  box-shadow: var(--shadow-md);
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.edit-btn {
-  background: #4CAF50;
-  color: white;
-}
+.fab svg { font-size: 24px; }
+.fab:hover { background: var(--accent-hover); }
+.fab:active { transform: scale(0.97); }
 
-.edit-btn:hover {
-  background: #45a049;
-}
-
-.delete-btn {
-  background: #f5f5f5;
-  color: #c62828;
-  border: 1px solid #e0e0e0;
-}
-
-.delete-btn:hover {
-  background: #ffebee;
-  border-color: #c62828;
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .page-header h1 {
-    flex: none;
-  }
-
-  .questions-table th,
-  .questions-table td {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  .action-btn {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
+@media (max-width: 700px) {
+  .page-body { padding: 16px; }
+  .fab span { display: none; }
+  .fab { width: 56px; padding: 0; justify-content: center; }
 }

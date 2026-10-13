@@ -1,8 +1,9 @@
 import { useRef, useEffect, useState } from 'react'
 import '../styles/RichTextEditor.css'
-import { MdFormatBold, MdFormatItalic, MdFormatUnderlined, MdFormatColorText, MdCode } from 'react-icons/md'
-import SyntaxHighlighter from 'react-syntax-highlighter'
-import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs'
+import {
+  MdFormatBold, MdFormatItalic, MdFormatUnderlined, MdFormatColorText, MdCode,
+  MdFormatListBulleted, MdFormatListNumbered, MdFormatClear
+} from 'react-icons/md'
 
 interface RichTextEditorProps {
   value: string
@@ -18,6 +19,21 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [showLanguageSelector, setShowLanguageSelector] = useState(false)
   const colorInputRef = useRef<HTMLInputElement>(null)
+  const [active, setActive] = useState<Record<string, boolean>>({})
+
+  // Reflect the formatting at the caret on the toolbar buttons
+  useEffect(() => {
+    const COMMANDS = ['bold', 'italic', 'underline', 'insertUnorderedList', 'insertOrderedList']
+    const refresh = () => {
+      const sel = window.getSelection()
+      if (!sel || !sel.anchorNode || !editorRef.current?.contains(sel.anchorNode)) return
+      const next: Record<string, boolean> = {}
+      COMMANDS.forEach(cmd => { next[cmd] = document.queryCommandState(cmd) })
+      setActive(next)
+    }
+    document.addEventListener('selectionchange', refresh)
+    return () => document.removeEventListener('selectionchange', refresh)
+  }, [])
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML === '' && value) {
@@ -28,7 +44,6 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
   const handleInput = () => {
     if (editorRef.current) {
       const html = editorRef.current.innerHTML
-      console.log('RichTextEditor input:', html.substring(0, 50), '... length:', html.length)
       onChange(html)
     }
   }
@@ -43,8 +58,45 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
     setShowColorPicker(false)
   }
 
+  // Inside a code block, Enter adds a newline; Enter on an empty last line exits the block.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter' || e.shiftKey) return
+    const sel = window.getSelection()
+    if (!sel || !sel.rangeCount || !sel.isCollapsed) return
+    const node = sel.anchorNode
+    const el = node && (node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement)
+    const pre = el?.closest('pre')
+    if (!pre || !editorRef.current?.contains(pre)) return
+
+    e.preventDefault()
+    const tail = document.createRange()
+    tail.selectNodeContents(pre)
+    tail.setStart(sel.anchorNode!, sel.anchorOffset)
+    const atEnd = tail.toString() === ''
+    const text = pre.textContent || ''
+
+    if (atEnd && text.endsWith('\n')) {
+      // Drop the extra blank line and move the caret after the block
+      document.execCommand('delete')
+      let next = pre.nextElementSibling
+      if (!next) {
+        next = document.createElement('p')
+        next.innerHTML = '<br>'
+        pre.after(next)
+      }
+      const range = document.createRange()
+      range.setStart(next, 0)
+      range.collapse(true)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    } else {
+      document.execCommand('insertText', false, '\n')
+    }
+    handleInput()
+  }
+
   const insertCodeBlock = (language: string = 'javascript') => {
-    const codeBlock = `<pre class="code-block" data-language="${language}"><code>${placeholder || ''}</code></pre>`
+    const codeBlock = `<pre class="code-block" data-language="${language}"><code>${placeholder || ''}</code></pre><p><br></p>`
     document.execCommand('insertHTML', false, codeBlock)
     setShowLanguageSelector(false)
   }
@@ -54,7 +106,8 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
       <div className="editor-toolbar">
         <button
           type="button"
-          className="toolbar-btn"
+          className={`toolbar-btn ${active.bold ? 'active' : ''}`}
+          onMouseDown={e => e.preventDefault()}
           onClick={() => applyFormat('bold')}
           title="Bold (Ctrl+B)"
           disabled={disabled}
@@ -63,7 +116,8 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
         </button>
         <button
           type="button"
-          className="toolbar-btn"
+          className={`toolbar-btn ${active.italic ? 'active' : ''}`}
+          onMouseDown={e => e.preventDefault()}
           onClick={() => applyFormat('italic')}
           title="Italic (Ctrl+I)"
           disabled={disabled}
@@ -72,7 +126,8 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
         </button>
         <button
           type="button"
-          className="toolbar-btn"
+          className={`toolbar-btn ${active.underline ? 'active' : ''}`}
+          onMouseDown={e => e.preventDefault()}
           onClick={() => applyFormat('underline')}
           title="Underline (Ctrl+U)"
           disabled={disabled}
@@ -84,21 +139,23 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
 
         <button
           type="button"
-          className="toolbar-btn"
+          className={`toolbar-btn ${active.insertUnorderedList ? 'active' : ''}`}
+          onMouseDown={e => e.preventDefault()}
           onClick={() => applyFormat('insertUnorderedList')}
-          title="Bullet List"
+          title="Bullet list"
           disabled={disabled}
         >
-          • List
+          <MdFormatListBulleted />
         </button>
         <button
           type="button"
-          className="toolbar-btn"
+          className={`toolbar-btn ${active.insertOrderedList ? 'active' : ''}`}
+          onMouseDown={e => e.preventDefault()}
           onClick={() => applyFormat('insertOrderedList')}
-          title="Numbered List"
+          title="Numbered list"
           disabled={disabled}
         >
-          1. List
+          <MdFormatListNumbered />
         </button>
 
         <div className="toolbar-divider"></div>
@@ -125,6 +182,7 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
                 {['#000000', '#FF0000', '#00AA00', '#0000FF', '#FFAA00', '#FF00FF'].map(color => (
                   <button
                     key={color}
+                    type="button"
                     className="color-swatch"
                     style={{ backgroundColor: color }}
                     onClick={() => applyFontColor(color)}
@@ -167,11 +225,12 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
         <button
           type="button"
           className="toolbar-btn"
+          onMouseDown={e => e.preventDefault()}
           onClick={() => applyFormat('removeFormat')}
-          title="Clear Formatting"
+          title="Clear formatting"
           disabled={disabled}
         >
-          Clear
+          <MdFormatClear />
         </button>
       </div>
 
@@ -180,6 +239,7 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
         className="editor-content"
         contentEditable={!disabled}
         onInput={handleInput}
+        onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         suppressContentEditableWarning
         data-placeholder={placeholder || 'Start typing...'}
