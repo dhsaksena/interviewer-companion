@@ -1,154 +1,192 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import '../styles/QuestionsListPage.css'
-import { MdArrowBack, MdEdit, MdDelete } from 'react-icons/md'
+import { MdEdit, MdDelete, MdAdd, MdSearch, MdInbox } from 'react-icons/md'
 import type { Question } from '../types'
+import PageHeader from '../components/PageHeader'
+import { ConfirmDialog } from '../components/CategoryDialogs'
+import { useToast } from '../components/Toast'
 
 interface QuestionsListPageProps {
-  selectedSubcategory: string
+  // null shows every question
+  selectedSubcategory: string | null
   onBack: () => void
   onSelectQuestion: (questionId: number) => void
   onViewQuestion: (questionId: number) => void
+  onAddQuestion: () => void
 }
 
-const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion, onViewQuestion }: QuestionsListPageProps) => {
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+
+const DIFFICULTY_FILTERS = ['All', 'Easy', 'Medium', 'Hard']
+
+const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion, onViewQuestion, onAddQuestion }: QuestionsListPageProps) => {
+  const toast = useToast()
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [difficulty, setDifficulty] = useState('All')
+  const [type, setType] = useState('All')
+  const [toDelete, setToDelete] = useState<Question | null>(null)
 
   useEffect(() => {
-    fetchQuestions()
-  }, [selectedSubcategory])
+    let cancelled = false
+    setLoading(true)
+    setSearch('')
+    setDifficulty('All')
+    setType('All')
 
-  const fetchQuestions = async () => {
-    try {
-      setLoading(true)
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
-      const response = await fetch(`${apiUrl}/questions?subcategory=${encodeURIComponent(selectedSubcategory)}`)
-
-      if (!response.ok) throw new Error('Failed to fetch questions')
-
-      const data = await response.json()
-      setQuestions(data)
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch questions')
-      console.error('Error fetching questions:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleDelete = async (questionId: number) => {
-    if (!confirm('Are you sure you want to delete this question?')) return
-
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
-      const response = await fetch(`${apiUrl}/questions/${questionId}`, {
-        method: 'DELETE'
+    const query = selectedSubcategory ? `?subcategory=${encodeURIComponent(selectedSubcategory)}` : ''
+    fetch(`${apiUrl}/questions${query}`)
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch questions')
+        return response.json()
+      })
+      .then(data => {
+        if (cancelled) return
+        setQuestions(data)
+        setError(null)
+      })
+      .catch(err => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to fetch questions')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
       })
 
-      if (!response.ok) throw new Error('Failed to delete question')
+    return () => { cancelled = true }
+  }, [selectedSubcategory])
 
-      setQuestions(questions.filter(q => q.id !== questionId))
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete question')
-    }
+  const types = useMemo(() => ['All', ...Array.from(new Set(questions.map(q => q.type)))], [questions])
+
+  const visible = useMemo(() => {
+    const needle = search.trim().toLowerCase()
+    return questions.filter(q =>
+      (!needle || q.title.toLowerCase().includes(needle)) &&
+      (difficulty === 'All' || q.difficulty === difficulty) &&
+      (type === 'All' || q.type === type)
+    )
+  }, [questions, search, difficulty, type])
+
+  const handleDelete = async () => {
+    if (!toDelete) return
+    const response = await fetch(`${apiUrl}/questions/${toDelete.id}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Failed to delete question')
+    setQuestions(prev => prev.filter(q => q.id !== toDelete.id))
+    toast('Question deleted')
   }
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Easy': return '#4CAF50'
-      case 'Medium': return '#FF9800'
-      case 'Hard': return '#F44336'
-      default: return '#999'
-    }
-  }
+  const filtering = search.trim() !== '' || difficulty !== 'All' || type !== 'All'
+  const title = selectedSubcategory ?? 'All questions'
 
   return (
-    <div className="questions-list-page">
-      <div className="page-header">
-        <button className="back-btn" onClick={onBack}>
-          <MdArrowBack /> Back
-        </button>
-        <h1>Questions for {selectedSubcategory}</h1>
-        <span className="count">{questions.length} questions</span>
+    <div className="page">
+      <PageHeader
+        title={title}
+        crumbs={[{ label: 'Home', onClick: onBack }, { label: title }]}
+        actions={<span className="chip">{questions.length} {questions.length === 1 ? 'question' : 'questions'}</span>}
+      />
+
+      <div className="page-body">
+        {loading && <div className="state-box">Loading questions...</div>}
+        {error && <div className="alert alert-error">{error}</div>}
+
+        {!loading && !error && questions.length === 0 && (
+          <div className="state-box">
+            <MdInbox className="state-icon" />
+            <p className="state-title">No questions yet</p>
+            <p>Use the + button to add the first one{selectedSubcategory ? ` to ${selectedSubcategory}` : ''}.</p>
+          </div>
+        )}
+
+        {!loading && !error && questions.length > 0 && (
+          <>
+            <div className="list-toolbar">
+              <div className="search-box">
+                <MdSearch />
+                <input
+                  type="search"
+                  placeholder="Search questions..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  aria-label="Search questions"
+                />
+              </div>
+              <select value={difficulty} onChange={e => setDifficulty(e.target.value)} aria-label="Filter by difficulty">
+                {DIFFICULTY_FILTERS.map(d => <option key={d} value={d}>{d === 'All' ? 'All difficulties' : d}</option>)}
+              </select>
+              <select value={type} onChange={e => setType(e.target.value)} aria-label="Filter by type">
+                {types.map(t => <option key={t} value={t}>{t === 'All' ? 'All types' : t}</option>)}
+              </select>
+            </div>
+
+            {visible.length === 0 ? (
+              <div className="state-box">
+                <p className="state-title">No matches</p>
+                <button type="button" className="btn btn-secondary" onClick={() => { setSearch(''); setDifficulty('All'); setType('All') }}>
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="table-card">
+                <table className="questions-table">
+                  <thead>
+                    <tr>
+                      <th className="col-num">#</th>
+                      <th>Title</th>
+                      <th className="col-type">Type</th>
+                      <th className="col-difficulty">Difficulty</th>
+                      <th className="col-actions"><span className="sr-only">Actions</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((question, index) => (
+                      <tr key={question.id}>
+                        <td className="num-cell">{index + 1}</td>
+                        <td className="title-cell">
+                          <button type="button" className="title-link" onClick={() => onViewQuestion(question.id)} title={question.title}>
+                            {question.title}
+                          </button>
+                        </td>
+                        <td className="type-cell">{question.type}</td>
+                        <td>
+                          <span className={`chip difficulty-${question.difficulty.toLowerCase()}`}>{question.difficulty}</span>
+                        </td>
+                        <td className="actions-cell">
+                          <div className="row-actions">
+                            <button type="button" className="icon-btn" onClick={() => onSelectQuestion(question.id)} title="Edit question" aria-label={`Edit ${question.title}`}>
+                              <MdEdit />
+                            </button>
+                            <button type="button" className="icon-btn danger" onClick={() => setToDelete(question)} title="Delete question" aria-label={`Delete ${question.title}`}>
+                              <MdDelete />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {filtering && visible.length > 0 && (
+              <p className="filter-note">Showing {visible.length} of {questions.length}</p>
+            )}
+          </>
+        )}
       </div>
 
-      {loading && <div className="loading">Loading questions...</div>}
-      {error && <div className="error-message">{error}</div>}
+      <button type="button" className="fab" onClick={onAddQuestion} title="Add question" aria-label="Add question">
+        <MdAdd /> <span>New question</span>
+      </button>
 
-      {!loading && !error && (
-        <div className="table-container">
-          {questions.length === 0 ? (
-            <div className="empty-state">
-              <p>No questions yet for {selectedSubcategory}</p>
-              <p>Create one to get started!</p>
-            </div>
-          ) : (
-            <table className="questions-table">
-              <colgroup>
-                <col className="col-sno" />
-                <col className="col-title" />
-                <col className="col-type" />
-                <col className="col-difficulty" />
-                <col className="col-actions" />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th className="center">S.No</th>
-                  <th>Title</th>
-                  <th className="center">Type</th>
-                  <th className="center">Difficulty</th>
-                  <th className="center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {questions.map(question => (
-                  <tr key={question.id}>
-                    <td className="sno-cell">{question.id}</td>
-                    <td className="title-cell">
-                      <button
-                        type="button"
-                        className="title-link"
-                        onClick={() => onViewQuestion(question.id)}
-                        title={question.title}
-                      >
-                        {question.title}
-                      </button>
-                    </td>
-                    <td className="type-cell">{question.type}</td>
-                    <td className="difficulty-cell">
-                      <span
-                        className="difficulty-badge"
-                        style={{ backgroundColor: getDifficultyColor(question.difficulty) }}
-                      >
-                        {question.difficulty}
-                      </span>
-                    </td>
-                    <td className="actions-cell">
-                      <div className="actions-wrap">
-                        <button
-                          className="action-btn edit-btn"
-                          onClick={() => onSelectQuestion(question.id)}
-                          title="Edit question"
-                        >
-                          <MdEdit /> Edit
-                        </button>
-                        <button
-                          className="action-btn delete-btn"
-                          onClick={() => handleDelete(question.id)}
-                          title="Delete question"
-                        >
-                          <MdDelete /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+      {toDelete && (
+        <ConfirmDialog
+          title="Delete question"
+          message={`Delete "${toDelete.title}"? This cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={handleDelete}
+          onClose={() => setToDelete(null)}
+        />
       )}
     </div>
   )

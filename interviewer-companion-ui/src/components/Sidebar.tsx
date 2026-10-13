@@ -12,44 +12,29 @@ import {
 } from '../api/categoriesApi'
 import { NameDialog, ConfirmDialog, type NameDialogProps, type ConfirmDialogProps } from './CategoryDialogs'
 import { AiOutlineHome } from 'react-icons/ai'
-import { BsQuestionCircle, BsBookmark, BsClock, BsShuffle } from 'react-icons/bs'
-import { MdKeyboardArrowRight, MdAdd, MdEdit, MdDelete } from 'react-icons/md'
+import { BsQuestionCircle } from 'react-icons/bs'
+import { MdKeyboardArrowRight, MdAdd, MdEdit, MdDelete, MdMenuOpen, MdMenu } from 'react-icons/md'
 
 interface SidebarProps {
   selectedCategory: string | null
   onSelectCategory: (category: string | null) => void
-  onAddQuestion?: () => void
   onSelectSubcategory?: (subcategory: string) => void
+  activeNav: 'home' | 'all' | null
+  onGoHome: () => void
+  onShowAll: () => void
   onSubcategoryDeleted?: (subcategory: string) => void
-}
-
-const NAV_ITEMS = [
-  { label: 'Home', iconName: 'home', active: true },
-  { label: 'All Questions', iconName: 'questions', active: false },
-  { label: 'Saved Questions', iconName: 'saved', active: false },
-  { label: 'My Sessions', iconName: 'sessions', active: false },
-  { label: 'Random Practice', iconName: 'random', active: false },
-]
-
-const getNavIcon = (iconName: string) => {
-  switch (iconName) {
-    case 'home':      return <AiOutlineHome />
-    case 'questions': return <BsQuestionCircle />
-    case 'saved':     return <BsBookmark />
-    case 'sessions':  return <BsClock />
-    case 'random':    return <BsShuffle />
-    default:          return null
-  }
 }
 
 type NameDialogConfig = Omit<NameDialogProps, 'onClose'>
 type ConfirmDialogConfig = Omit<ConfirmDialogProps, 'onClose'>
 
-const DEFAULT_WIDTH = 200
-const MIN_WIDTH = 180
+const DEFAULT_WIDTH = 260
+const MIN_WIDTH = 220
 const MAX_WIDTH = 500
 const KEYBOARD_STEP = 16
 const WIDTH_STORAGE_KEY = 'sidebarWidth'
+const COLLAPSED_STORAGE_KEY = 'sidebarCollapsed'
+const COLLAPSED_WIDTH = 52
 
 const clampWidth = (width: number) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width))
 
@@ -58,7 +43,7 @@ const loadStoredWidth = () => {
   return stored ? clampWidth(stored) : DEFAULT_WIDTH
 }
 
-const Sidebar = ({ selectedCategory, onSelectCategory, onAddQuestion, onSelectSubcategory, onSubcategoryDeleted }: SidebarProps) => {
+const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSubcategoryDeleted, activeNav, onGoHome, onShowAll }: SidebarProps) => {
   const [categories, setCategories] = useState<CategoryRecord[]>([])
   // Keyed by category id; categories default to expanded until toggled
   const [expanded, setExpanded] = useState<Record<number, boolean>>({})
@@ -67,10 +52,15 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onAddQuestion, onSelectSu
   const [nameDialog, setNameDialog] = useState<NameDialogConfig | null>(null)
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogConfig | null>(null)
   const [width, setWidth] = useState(loadStoredWidth)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSED_STORAGE_KEY) === '1')
 
   useEffect(() => {
     localStorage.setItem(WIDTH_STORAGE_KEY, String(width))
   }, [width])
+
+  useEffect(() => {
+    localStorage.setItem(COLLAPSED_STORAGE_KEY, collapsed ? '1' : '0')
+  }, [collapsed])
 
   const handleResizeStart = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -204,26 +194,46 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onAddQuestion, onSelectSu
     },
   })
 
+  if (collapsed) {
+    return (
+      <div className="sidebar-wrapper" style={{ width: COLLAPSED_WIDTH }}>
+        <div className="sidebar collapsed">
+          <button type="button" className="sidebar-icon-btn" onClick={() => setCollapsed(false)} title="Expand sidebar" aria-label="Expand sidebar">
+            <MdMenu />
+          </button>
+          <button type="button" className={`sidebar-icon-btn ${activeNav === 'home' ? 'active' : ''}`} onClick={onGoHome} title="Home" aria-label="Home">
+            <AiOutlineHome />
+          </button>
+          <button type="button" className={`sidebar-icon-btn ${activeNav === 'all' ? 'active' : ''}`} onClick={onShowAll} title="All questions" aria-label="All questions">
+            <BsQuestionCircle />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="sidebar-wrapper" style={{ width }}>
     <div className="sidebar">
       <div className="sidebar-header">
-        <div className="logo">
+        <div className="logo" onClick={onGoHome}>
           <span className="logo-icon">📋</span>
+          <span>Interview Companion</span>
         </div>
+        <button type="button" className="sidebar-icon-btn" onClick={() => setCollapsed(true)} title="Collapse sidebar" aria-label="Collapse sidebar">
+          <MdMenuOpen />
+        </button>
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map(item => (
-          <a
-            key={item.label}
-            href="#"
-            className={`nav-item ${item.active ? 'active' : ''}`}
-          >
-            <span className="nav-icon">{getNavIcon(item.iconName)}</span>
-            <span>{item.label}</span>
-          </a>
-        ))}
+        <button type="button" className={`nav-item ${activeNav === 'home' ? 'active' : ''}`} onClick={onGoHome}>
+          <span className="nav-icon"><AiOutlineHome /></span>
+          <span>Home</span>
+        </button>
+        <button type="button" className={`nav-item ${activeNav === 'all' ? 'active' : ''}`} onClick={onShowAll}>
+          <span className="nav-icon"><BsQuestionCircle /></span>
+          <span>All Questions</span>
+        </button>
       </nav>
 
       <div className="categories-section">
@@ -242,7 +252,11 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onAddQuestion, onSelectSu
             <div key={category.id} className="category-group">
               <div
                 className="category-header"
+                role="button"
+                tabIndex={0}
+                aria-expanded={open}
                 onClick={() => toggleCategory(category.id)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCategory(category.id) } }}
               >
                 <MdKeyboardArrowRight
                   className={`chevron ${open ? 'expanded' : ''}`}
@@ -290,7 +304,10 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onAddQuestion, onSelectSu
                       className={`subcategory-item ${
                         selectedCategory === subcategory.name ? 'selected' : ''
                       }`}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleSelectSubcategory(subcategory.name)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleSelectSubcategory(subcategory.name) }}
                     >
                       <MdKeyboardArrowRight className="subcategory-arrow" />
                       <span className="subcategory-name">{subcategory.name}</span>
@@ -324,10 +341,7 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onAddQuestion, onSelectSu
       </div>
 
       <div className="sidebar-buttons">
-        <button className="add-question-btn" onClick={onAddQuestion}>
-          + Add Question
-        </button>
-        <button className="add-category-btn" onClick={openAddCategory}>+ Add Category</button>
+        <button type="button" className="add-category-btn" onClick={openAddCategory}>+ Add Category</button>
       </div>
 
       {nameDialog && <NameDialog {...nameDialog} onClose={closeNameDialog} />}

@@ -1,9 +1,15 @@
 .rich-editor-container {
   display: flex;
   flex-direction: column;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   overflow: hidden;
+}
+
+.rich-editor-container:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.15);
 }
 
 .editor-toolbar {
@@ -11,8 +17,8 @@
   align-items: center;
   gap: 4px;
   padding: 8px 12px;
-  background: #f9f9f9;
-  border-bottom: 1px solid #e0e0e0;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
 }
 
@@ -22,21 +28,26 @@
   justify-content: center;
   gap: 4px;
   padding: 6px 10px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--ink-2);
   transition: all 0.2s;
-  min-width: 36px;
+  min-width: 34px;
   height: 32px;
 }
 
 .toolbar-btn:hover:not(:disabled) {
-  background: #f0f0f0;
-  border-color: #999;
+  background: var(--line);
+  color: var(--ink);
+}
+
+.toolbar-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .toolbar-btn:active:not(:disabled) {
@@ -55,7 +66,7 @@
 .toolbar-divider {
   width: 1px;
   height: 24px;
-  background: #ddd;
+  background: var(--line-strong);
   margin: 0 4px;
 }
 
@@ -154,9 +165,9 @@
   padding: 10px 12px;
   min-height: 300px;
   outline: none;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #333;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
   word-wrap: break-word;
   overflow-y: auto;
   text-align: left;
@@ -178,7 +189,7 @@
 
 .editor-content:empty:before {
   content: attr(data-placeholder);
-  color: #999;
+  color: var(--ink-3);
   pointer-events: none;
   display: block;
   text-align: left;
@@ -190,15 +201,30 @@
 }
 
 .code-block {
-  background: #282c34;
-  color: #abb2bf;
-  padding: 12px;
-  border-radius: 4px;
+  position: relative;
+  background: #1e2430;
+  color: #d5dbe8;
+  padding: 26px 14px 12px;
+  border-radius: var(--radius-sm);
   margin: 8px 0;
   overflow-x: auto;
-  font-family: 'Courier New', monospace;
+  font-family: var(--mono);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.code-block::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-family: var(--font);
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #8b95aa;
+  user-select: none;
 }
 
 .code-block code {
