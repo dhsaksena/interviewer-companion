@@ -271,3 +271,47 @@
 .add-category-btn:hover { border-color: var(--accent-on-dark); color: #fff; background: rgba(255, 255, 255, 0.04); }
 
 .sidebar :focus-visible { outline-color: var(--accent-on-dark); }
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 0 16px;
+  border-top: 1px solid var(--nav-line);
+}
+
+.sidebar-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.sidebar-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--nav-text-strong);
+  font-weight: 700;
+}
+
+.sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar-user-name,
+.sidebar-user-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-name { color: var(--nav-text-strong); font-size: 13px; font-weight: 600; }
+.sidebar-user-email { color: var(--nav-muted); font-size: 11px; }
+
+.sidebar-signout-collapsed { margin-top: auto; }

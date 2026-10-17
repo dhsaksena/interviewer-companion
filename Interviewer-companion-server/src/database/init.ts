@@ -87,6 +87,27 @@ export const initializeDatabase = async () => {
       )
     `)
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        google_sub VARCHAR(255) NOT NULL UNIQUE,
+        email VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        picture VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `)
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        sid VARCHAR(128) NOT NULL PRIMARY KEY,
+        data MEDIUMTEXT NOT NULL,
+        expires_at BIGINT NOT NULL,
+        INDEX idx_sessions_expires_at (expires_at)
+      )
+    `)
+
     await migrateQuestionIdsToInt(connection, dbName)
     await connection.query(questionsTableDdl('questions'))
 

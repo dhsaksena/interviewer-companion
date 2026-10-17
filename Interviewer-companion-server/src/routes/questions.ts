@@ -1,29 +1,14 @@
 import { Router } from 'express'
 import multer from 'multer'
-import path from 'path'
-import { fileURLToPath } from 'url'
 import { QuestionsController } from '../controllers/questionsController.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const uploadsDir = path.join(__dirname, '../../uploads')
 
 const router = Router()
 const controller = new QuestionsController()
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir)
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}${path.extname(file.originalname)}`
-    cb(null, uniqueName)
-  }
-})
-
 const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
+  // Buffered in memory (5MB cap) and then handed to the storage service (S3 on Lambda)
+  storage: multer.memoryStorage(),
+  fileFilter: (_req, file, cb) => {
     const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true)

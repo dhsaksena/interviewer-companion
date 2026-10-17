@@ -6,13 +6,14 @@ import PageHeader from '../components/PageHeader'
 import QuestionForm, { toFormData, type QuestionFormData } from '../components/QuestionForm'
 import { ConfirmDialog } from '../components/CategoryDialogs'
 import { useToast } from '../components/Toast'
+import { API_URL, apiFetch } from '../api/apiFetch'
 
 interface QuestionEditPageProps {
   questionId: number
   onBack: () => void
 }
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const apiUrl = API_URL
 
 const toImageUrl = (url: string) =>
   url.startsWith('http') ? url : `${apiUrl.replace('/api', '')}${url}`
@@ -31,7 +32,7 @@ const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
     let cancelled = false
     Promise.all([
       fetchCategories(),
-      fetch(`${apiUrl}/questions/${questionId}`).then(res => {
+      apiFetch(`${apiUrl}/questions/${questionId}`).then(res => {
         if (!res.ok) throw new Error('Failed to fetch question')
         return res.json()
       }),
@@ -61,7 +62,7 @@ const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
     setSaving(true)
     setError(null)
     try {
-      const response = await fetch(`${apiUrl}/questions/${questionId}`, { method: 'PUT', body: toFormData(data) })
+      const response = await apiFetch(`${apiUrl}/questions/${questionId}`, { method: 'PUT', body: toFormData(data) })
       if (!response.ok) throw new Error(`Could not save changes (${response.status})`)
       toast('Changes saved')
       onBack()
@@ -72,7 +73,7 @@ const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
   }
 
   const handleDelete = async () => {
-    const response = await fetch(`${apiUrl}/questions/${questionId}`, { method: 'DELETE' })
+    const response = await apiFetch(`${apiUrl}/questions/${questionId}`, { method: 'DELETE' })
     if (!response.ok) throw new Error('Failed to delete question')
     toast('Question deleted')
     onBack()

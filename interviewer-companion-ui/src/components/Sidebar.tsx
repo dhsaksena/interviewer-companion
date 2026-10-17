@@ -13,7 +13,8 @@ import {
 import { NameDialog, ConfirmDialog, type NameDialogProps, type ConfirmDialogProps } from './CategoryDialogs'
 import { AiOutlineHome } from 'react-icons/ai'
 import { BsQuestionCircle } from 'react-icons/bs'
-import { MdKeyboardArrowRight, MdAdd, MdEdit, MdDelete, MdMenuOpen, MdMenu } from 'react-icons/md'
+import { MdKeyboardArrowRight, MdAdd, MdEdit, MdDelete, MdMenuOpen, MdMenu, MdLogout } from 'react-icons/md'
+import { useAuth } from '../auth/AuthContext'
 
 interface SidebarProps {
   selectedCategory: string | null
@@ -44,6 +45,7 @@ const loadStoredWidth = () => {
 }
 
 const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSubcategoryDeleted, activeNav, onGoHome, onShowAll }: SidebarProps) => {
+  const { user, signOut } = useAuth()
   const [categories, setCategories] = useState<CategoryRecord[]>([])
   // Keyed by category id; categories default to expanded until toggled
   const [expanded, setExpanded] = useState<Record<number, boolean>>({})
@@ -207,6 +209,9 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
           <button type="button" className={`sidebar-icon-btn ${activeNav === 'all' ? 'active' : ''}`} onClick={onShowAll} title="All questions" aria-label="All questions">
             <BsQuestionCircle />
           </button>
+          <button type="button" className="sidebar-icon-btn sidebar-signout-collapsed" onClick={signOut} title="Sign out" aria-label="Sign out">
+            <MdLogout />
+          </button>
         </div>
       </div>
     )
@@ -343,6 +348,21 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
       <div className="sidebar-buttons">
         <button type="button" className="add-category-btn" onClick={openAddCategory}>+ Add Category</button>
       </div>
+
+      {user && (
+        <div className="sidebar-user">
+          {user.picture
+            ? <img className="sidebar-avatar" src={user.picture} alt="" referrerPolicy="no-referrer" />
+            : <span className="sidebar-avatar sidebar-avatar-fallback">{user.name.charAt(0).toUpperCase()}</span>}
+          <div className="sidebar-user-info">
+            <span className="sidebar-user-name">{user.name}</span>
+            <span className="sidebar-user-email">{user.email}</span>
+          </div>
+          <button type="button" className="sidebar-icon-btn" onClick={signOut} title="Sign out" aria-label="Sign out">
+            <MdLogout />
+          </button>
+        </div>
+      )}
 
       {nameDialog && <NameDialog {...nameDialog} onClose={closeNameDialog} />}
       {confirmDialog && <ConfirmDialog {...confirmDialog} onClose={closeConfirmDialog} />}

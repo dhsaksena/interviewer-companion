@@ -1,9 +1,9 @@
 import type { CategoryRecord } from '../types'
+import { API_URL, apiFetch } from './apiFetch'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const request = async (path: string, options: RequestInit = {}) => {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await apiFetch(`${API_URL}${path}`, {
     ...options,
     headers: { 'Content-Type': 'application/json' },
   })

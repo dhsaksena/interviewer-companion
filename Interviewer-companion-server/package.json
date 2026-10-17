@@ -5,11 +5,14 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/server.js",
     "lint": "eslint src",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:init": "tsx src/database/migrate.ts",
+    "bundle": "esbuild src/handler.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist-lambda/index.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\" --sourcemap --minify",
+    "package:lambda": "npm run bundle && cd dist-lambda && echo '{\"type\":\"module\"}' > package.json && zip -rq ../lambda.zip ."
   },
   "keywords": [
     "interview",
@@ -19,17 +22,25 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-session": "^1.19.0",
+    "google-auth-library": "^11.3.1",
     "multer": "^2.4.0",
-    "mysql2": "^3.6.5"
+    "mysql2": "^3.6.5",
+    "serverless-http": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/aws-lambda": "^8.10.164",
     "@types/cors": "^2.8.14",
     "@types/express": "^4.17.17",
+    "@types/express-session": "^1.19.0",
+    "@types/multer": "^2.3.0",
     "@types/node": "^20.3.1",
+    "esbuild": "^0.28.2",
     "eslint": "^10.10.0",
     "tsx": "^4.7.0",
     "typescript": "~6.0.2",

@@ -6,10 +6,12 @@ import QuestionsListPage from './pages/QuestionsListPage'
 import QuestionEditPage from './pages/QuestionEditPage'
 import QuestionViewPage from './pages/QuestionViewPage'
 import HomePage from './pages/HomePage'
+import LandingPage from './pages/LandingPage'
+import { useAuth } from './auth/AuthContext'
 
 type PageType = 'home' | 'add-question' | 'questions-list' | 'edit-question' | 'view-question'
 
-function App()
+function MainApp()
 {
   // Name of the subcategory highlighted in the sidebar
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -100,6 +102,15 @@ function App()
       )}
     </div>
   )
+}
+
+function App()
+{
+  const { user, loading } = useAuth()
+
+  if (loading) return <div className="auth-loading" role="status">Loading…</div>
+  // Remount MainApp per user so navigation state never leaks between sessions
+  return user ? <MainApp key={user.id} /> : <LandingPage />
 }
 
 export default App

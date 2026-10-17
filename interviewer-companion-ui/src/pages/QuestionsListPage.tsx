@@ -5,6 +5,7 @@ import type { Question } from '../types'
 import PageHeader from '../components/PageHeader'
 import { ConfirmDialog } from '../components/CategoryDialogs'
 import { useToast } from '../components/Toast'
+import { API_URL, apiFetch } from '../api/apiFetch'
 
 interface QuestionsListPageProps {
   // null shows every question
@@ -15,7 +16,7 @@ interface QuestionsListPageProps {
   onAddQuestion: () => void
 }
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const apiUrl = API_URL
 
 const DIFFICULTY_FILTERS = ['All', 'Easy', 'Medium', 'Hard']
 
@@ -37,7 +38,7 @@ const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion, onVi
     setType('All')
 
     const query = selectedSubcategory ? `?subcategory=${encodeURIComponent(selectedSubcategory)}` : ''
-    fetch(`${apiUrl}/questions${query}`)
+    apiFetch(`${apiUrl}/questions${query}`)
       .then(response => {
         if (!response.ok) throw new Error('Failed to fetch questions')
         return response.json()
@@ -70,7 +71,7 @@ const QuestionsListPage = ({ selectedSubcategory, onBack, onSelectQuestion, onVi
 
   const handleDelete = async () => {
     if (!toDelete) return
-    const response = await fetch(`${apiUrl}/questions/${toDelete.id}`, { method: 'DELETE' })
+    const response = await apiFetch(`${apiUrl}/questions/${toDelete.id}`, { method: 'DELETE' })
     if (!response.ok) throw new Error('Failed to delete question')
     setQuestions(prev => prev.filter(q => q.id !== toDelete.id))
     toast('Question deleted')
