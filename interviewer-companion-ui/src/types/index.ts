@@ -26,3 +26,9 @@ export interface CategoryRecord {
   name: string
   subcategories: SubcategoryRecord[]
 }
+export interface AuthUser {
+  id: number
+  email: string
+  name: string
+  picture: string | null
+}

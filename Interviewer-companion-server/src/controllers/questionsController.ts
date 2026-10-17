@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { QuestionsService } from '../services/questionsService.js'
+import { saveUpload } from '../services/storageService.js'
 import { AppError } from '../middleware/errorHandler.js'
 
 const parseQuestionId = (value: string): number => {
@@ -48,7 +49,7 @@ export class QuestionsController {
       let solutionImageUrl: string | undefined
 
       if (req.file) {
-        solutionImageUrl = `/uploads/${req.file.filename}`
+        solutionImageUrl = await saveUpload(req.file)
       }
 
       const question = await this.service.createQuestion({
@@ -75,7 +76,7 @@ export class QuestionsController {
       let solutionImageUrl: string | undefined
 
       if (req.file) {
-        solutionImageUrl = `/uploads/${req.file.filename}`
+        solutionImageUrl = await saveUpload(req.file)
       }
 
       const question = await this.service.updateQuestion(parseQuestionId(id), {

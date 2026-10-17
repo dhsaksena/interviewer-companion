@@ -204,3 +204,19 @@ NODE_ENV=production npm start
 ## License
 
 ISC
+
+## Deploying to AWS Lambda
+
+`src/handler.ts` wraps the Express app with `serverless-http` (API Gateway HTTP API payload v2 or REST API; Lambda Function URLs also work).
+
+```bash
+npm run db:init          # create/migrate schema (incl. sessions table) once per deploy, from a machine that can reach the DB
+npm run package:lambda   # bundles to dist-lambda/ and zips to lambda.zip
+```
+
+- **Runtime / handler**: Node.js 20+ (ESM), handler `index.handler`, upload `lambda.zip`. Suggested memory 512 MB+, timeout 15–30 s.
+- **Routing**: forward all paths (`ANY /{proxy+}` and `ANY /`) to the function; the app serves `/api/*`.
+- **Environment**: `NODE_ENV=production`, `DB_*`, `GOOGLE_CLIENT_ID`, `SESSION_SECRET`, `FRONTEND_URL`, `S3_BUCKET`, `S3_PUBLIC_BASE_URL`, and `COOKIE_SAMESITE=none` if the UI is on a different site than the API. Prefer pulling secrets from Secrets Manager/SSM over plain env vars.
+- **Database**: put the function in the VPC of your RDS instance (with NAT or VPC endpoints for S3 and Google's cert endpoint) and use RDS Proxy to avoid exhausting connections.
+- **Sessions** are stored in MySQL (`sessions` table), since Lambda instances don't share memory.
+- **Uploads** go to S3 (the Lambda filesystem is read-only). Grant the function `s3:PutObject` on the bucket, and make objects readable via CloudFront (preferred) or a bucket policy. Request bodies are limited to 6 MB by Lambda (images are capped at 5 MB).

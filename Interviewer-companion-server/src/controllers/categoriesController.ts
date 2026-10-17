@@ -13,7 +13,7 @@ const requireName = (value: unknown, label: string): string => {
 export class CategoriesController {
   private service = new CategoriesService()
 
-  async getAllCategories(req: Request, res: Response, next: NextFunction) {
+  async getAllCategories(_req: Request, res: Response, next: NextFunction) {
     try {
       const categories = await this.service.getAllCategories()
       res.json(categories)

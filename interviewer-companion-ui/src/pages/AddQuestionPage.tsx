@@ -4,13 +4,14 @@ import { fetchCategories } from '../api/categoriesApi'
 import PageHeader from '../components/PageHeader'
 import QuestionForm, { EMPTY_QUESTION, toFormData, type QuestionFormData } from '../components/QuestionForm'
 import { useToast } from '../components/Toast'
+import { API_URL, apiFetch } from '../api/apiFetch'
 
 interface AddQuestionPageProps {
   onBack: () => void
   initialSubcategory?: string | null
 }
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const apiUrl = API_URL
 
 const AddQuestionPage = ({ onBack, initialSubcategory }: AddQuestionPageProps) => {
   const toast = useToast()
@@ -31,7 +32,7 @@ const AddQuestionPage = ({ onBack, initialSubcategory }: AddQuestionPageProps) =
     setSaving(true)
     setError(null)
     try {
-      const response = await fetch(`${apiUrl}/questions`, { method: 'POST', body: toFormData(data) })
+      const response = await apiFetch(`${apiUrl}/questions`, { method: 'POST', body: toFormData(data) })
       if (!response.ok) throw new Error(`Could not save the question (${response.status})`)
       toast('Question added')
       onBack()

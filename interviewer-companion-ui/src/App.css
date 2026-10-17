@@ -8,3 +8,11 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #c5cad6; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #a3a9b8; }
+
+.auth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: var(--ink-3);
+}

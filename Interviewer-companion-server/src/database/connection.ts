@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise'
+import { config } from '../config/index.js'
 
 export const createPool = () => {
   return mysql.createPool({
@@ -8,8 +9,11 @@ export const createPool = () => {
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'interviewer_companion',
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: config.dbConnectionLimit,
     queueLimit: 0,
+    // Detect connections silently dropped while a Lambda instance was frozen
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
   })
 }
 
