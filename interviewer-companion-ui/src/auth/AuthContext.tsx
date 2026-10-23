@@ -1,7 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react'
 import type { AuthUser } from '../types'
-import { fetchCurrentUser, signInWithGoogle, signOut as signOutRequest } from '../api/authApi'
-import { UNAUTHORIZED_EVENT } from '../api/apiFetch'
+import {
+  fetchCurrentUser,
+  signInWithGoogle,
+  signOut as signOutRequest,
+} from '../api/authApi'
 
 interface AuthState {
   user: AuthUser | null
@@ -23,27 +33,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchCurrentUser()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false))
-  }, [])
+    let cancelled = false
 
-  // Any API call that comes back 401 means the session is gone: return to the landing page
-  useEffect(() => {
-    const handleUnauthorized = () => setUser(null)
-    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
-    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
+    fetchCurrentUser()
+      .then(currentUser => {
+        if (!cancelled) setUser(currentUser)
+      })
+      .catch(error => {
+        console.error('Failed to restore authentication session:', error)
+        if (!cancelled) setUser(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const signIn = useCallback(async (credential: string) => {
-    setUser(await signInWithGoogle(credential))
+    const authenticatedUser = await signInWithGoogle(credential)
+    setUser(authenticatedUser)
   }, [])
 
   const signOut = useCallback(async () => {
-    await signOutRequest().catch(() => {})
+    await signOutRequest()
     setUser(null)
   }, [])
 
-  return <AuthContext.Provider value={{ user, loading, signIn, signOut }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }

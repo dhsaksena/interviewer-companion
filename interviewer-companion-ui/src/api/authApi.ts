@@ -8,17 +8,19 @@ export const fetchCurrentUser = async (): Promise<AuthUser | null> => {
   return (await response.json()).user
 }
 
+
 export const signInWithGoogle = async (credential: string): Promise<AuthUser> => {
-  const response = await fetch(`${API_URL}/auth/google`, {
+  const response = await apiFetch(`${API_URL}/auth/google`, {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ credential }),
   })
+
   if (!response.ok) {
     const body = await response.json().catch(() => null)
-    throw new Error(body?.error ?? 'Sign-in failed')
+    throw new Error(body?.message ?? body?.error ?? 'Sign-in failed')
   }
+
   return (await response.json()).user
 }
 

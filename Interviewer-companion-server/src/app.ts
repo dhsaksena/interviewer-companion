@@ -19,12 +19,11 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 // Local development only: on Lambda uploads live in S3 and the filesystem is read-only
 if (!config.s3Bucket) app.use('/uploads', express.static(localUploadsDir))
-app.use(
-  cors({
-    origin: config.frontendUrl,
-    credentials: true,
-  })
-)
+
+
+if (!config.isProduction) {
+  app.use(cors({ origin: config.frontendUrl, credentials: true }))
+}
 
 // API Gateway / Function URL terminate TLS, so trust X-Forwarded-* for secure cookies
 if (config.isProduction) app.set('trust proxy', 1)

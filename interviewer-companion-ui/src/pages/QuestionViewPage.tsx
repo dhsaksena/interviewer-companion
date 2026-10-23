@@ -4,7 +4,7 @@ import '../styles/QuestionViewPage.css'
 import { MdEdit } from 'react-icons/md'
 import PageHeader from '../components/PageHeader'
 import ImageModal from '../components/ImageModal'
-import { API_URL, apiFetch } from '../api/apiFetch'
+import { API_URL, apiFetch, toImageUrl } from '../api/apiFetch'
 
 interface QuestionDetails {
   title: string
@@ -24,9 +24,6 @@ interface QuestionViewPageProps {
 }
 
 const apiUrl = API_URL
-
-const toImageUrl = (url: string) =>
-  url.startsWith('http') ? url : `${apiUrl.replace('/api', '')}${url}`
 
 const QuestionViewPage = ({ questionId, onBack, onEdit }: QuestionViewPageProps) => {
   const [question, setQuestion] = useState<QuestionDetails | null>(null)

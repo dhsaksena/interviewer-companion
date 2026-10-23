@@ -6,7 +6,7 @@ import PageHeader from '../components/PageHeader'
 import QuestionForm, { toFormData, type QuestionFormData } from '../components/QuestionForm'
 import { ConfirmDialog } from '../components/CategoryDialogs'
 import { useToast } from '../components/Toast'
-import { API_URL, apiFetch } from '../api/apiFetch'
+import { API_URL, apiFetch, toImageUrl } from '../api/apiFetch'
 
 interface QuestionEditPageProps {
   questionId: number
@@ -14,9 +14,6 @@ interface QuestionEditPageProps {
 }
 
 const apiUrl = API_URL
-
-const toImageUrl = (url: string) =>
-  url.startsWith('http') ? url : `${apiUrl.replace('/api', '')}${url}`
 
 const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
   const toast = useToast()
