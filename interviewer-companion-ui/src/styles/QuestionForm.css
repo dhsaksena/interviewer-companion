@@ -71,6 +71,7 @@
 .req { color: var(--danger); }
 
 .field input[type="text"],
+.field input[type="date"],
 .field select {
   padding: 9px 12px;
   background: var(--surface);

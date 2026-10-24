@@ -7,15 +7,22 @@ import QuestionForm, { toFormData, type QuestionFormData } from '../components/Q
 import { ConfirmDialog } from '../components/CategoryDialogs'
 import { useToast } from '../components/Toast'
 import { API_URL, apiFetch, toImageUrl } from '../api/apiFetch'
+import { ErrorBox, LoadingState } from '../components/StateViews'
+import { fetchQuestionUsage } from '../api/interviewsApi'
+import { backTarget, fromLabel, navigate, paths } from '../router'
+import type { InterviewUsage } from '../types'
+import { usageMessage } from '../utils/usageMessage'
 
 interface QuestionEditPageProps {
   questionId: number
-  onBack: () => void
+  // Path the user came from, so Back returns there
+  from: string | null
 }
 
 const apiUrl = API_URL
 
-const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
+const QuestionEditPage = ({ questionId, from }: QuestionEditPageProps) => {
+  const onBack = () => navigate(backTarget(from, paths.questions()))
   const toast = useToast()
   const [categories, setCategories] = useState<CategoryRecord[]>([])
   const [initial, setInitial] = useState<QuestionFormData | null>(null)
@@ -24,6 +31,8 @@ const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [usage, setUsage] = useState<InterviewUsage[]>([])
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -53,7 +62,7 @@ const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
         if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Failed to load question')
       })
     return () => { cancelled = true }
-  }, [questionId])
+  }, [questionId, reloadKey])
 
   const handleSubmit = async (data: QuestionFormData) => {
     setSaving(true)
@@ -73,7 +82,13 @@ const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
     const response = await apiFetch(`${apiUrl}/questions/${questionId}`, { method: 'DELETE' })
     if (!response.ok) throw new Error('Failed to delete question')
     toast('Question deleted')
-    onBack()
+    navigate(paths.questions(initial?.subcategory), { force: true })
+  }
+
+  const askDelete = async () => {
+    // Deleting also removes the question from interview rubrics, so say which ones
+    setUsage(await fetchQuestionUsage(questionId).catch(() => []))
+    setConfirmDelete(true)
   }
 
   return (
@@ -81,20 +96,20 @@ const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
       <PageHeader
         title="Edit question"
         crumbs={initial ? [
-          { label: initial.subcategory, onClick: onBack },
+          { label: fromLabel(from, initial.subcategory), onClick: onBack },
           { label: 'Edit' },
         ] : undefined}
         onBack={onBack}
         backDisabled={saving}
         actions={initial && (
-          <button type="button" className="btn btn-danger-outline" onClick={() => setConfirmDelete(true)} disabled={saving}>
+          <button type="button" className="btn btn-danger-outline" onClick={askDelete} disabled={saving}>
             <MdDelete /> Delete
           </button>
         )}
       />
 
-      {loadError && <div className="page-body"><div className="alert alert-error">{loadError}</div></div>}
-      {!initial && !loadError && <div className="state-box">Loading...</div>}
+      {loadError && <div className="page-body"><ErrorBox message={loadError} onRetry={() => { setLoadError(null); setReloadKey(k => k + 1) }} /></div>}
+      {!initial && !loadError && <div className="page-body"><LoadingState label="Loading question" rows={4} /></div>}
 
       {initial && (
         <QuestionForm
@@ -112,7 +127,7 @@ const QuestionEditPage = ({ questionId, onBack }: QuestionEditPageProps) => {
       {confirmDelete && (
         <ConfirmDialog
           title="Delete question"
-          message="Delete this question? This cannot be undone."
+          message={usageMessage('this question', usage)}
           confirmLabel="Delete"
           onConfirm={handleDelete}
           onClose={() => setConfirmDelete(false)}

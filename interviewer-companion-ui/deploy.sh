@@ -10,7 +10,7 @@ npm ci
 npm run build
 
 # Hashed assets can be cached forever; index.html must always be revalidated.
-aws s3 sync dist "s3://${S3_BUCKET}" --delete --exclude index.html \
+aws s3 sync dist "s3://${S3_BUCKET}" --delete --exclude index.html --exclude "uploads/*" \
   --cache-control "public,max-age=31536000,immutable"
 aws s3 cp dist/index.html "s3://${S3_BUCKET}/index.html" \
   --cache-control "no-cache,no-store,must-revalidate"

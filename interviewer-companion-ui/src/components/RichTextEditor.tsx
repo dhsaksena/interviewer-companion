@@ -179,7 +179,7 @@ const RichTextEditor = ({ value, onChange, placeholder, disabled }: RichTextEdit
                 defaultValue="#000000"
               />
               <div className="color-swatches">
-                {['#000000', '#FF0000', '#00AA00', '#0000FF', '#FFAA00', '#FF00FF'].map(color => (
+                {['#000000', '#FFFFFF', '#FF0000', '#00AA00', '#0000FF', '#FFAA00', '#FF00FF'].map(color => (
                   <button
                     key={color}
                     type="button"

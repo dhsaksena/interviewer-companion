@@ -12,18 +12,22 @@ import {
 } from '../api/categoriesApi'
 import { NameDialog, ConfirmDialog, type NameDialogProps, type ConfirmDialogProps } from './CategoryDialogs'
 import { AiOutlineHome } from 'react-icons/ai'
-import { BsQuestionCircle } from 'react-icons/bs'
+import { BsQuestionCircle, BsClipboardCheck } from 'react-icons/bs'
 import { MdKeyboardArrowRight, MdAdd, MdEdit, MdDelete, MdMenuOpen, MdMenu, MdLogout } from 'react-icons/md'
 import { useAuth } from '../auth/AuthContext'
+import logo from '../assets/saarthi-logo.png'
 
 interface SidebarProps {
+  // Name of the subcategory currently open, highlighted in the tree
   selectedCategory: string | null
-  onSelectCategory: (category: string | null) => void
-  onSelectSubcategory?: (subcategory: string) => void
-  activeNav: 'home' | 'all' | null
+  onSelectSubcategory: (subcategory: string, options?: { replace?: boolean }) => void
+  activeNav: 'home' | 'all' | 'interviews' | null
   onGoHome: () => void
   onShowAll: () => void
+  onShowInterviews: () => void
   onSubcategoryDeleted?: (subcategory: string) => void
+  // Changes whenever the page changes, so question counts stay current
+  refreshToken: string
 }
 
 type NameDialogConfig = Omit<NameDialogProps, 'onClose'>
@@ -37,6 +41,8 @@ const WIDTH_STORAGE_KEY = 'sidebarWidth'
 const COLLAPSED_STORAGE_KEY = 'sidebarCollapsed'
 const COLLAPSED_WIDTH = 52
 
+const questionCountOf = (category: CategoryRecord) => category.subcategories.reduce((n, s) => n + (s.question_count ?? 0), 0)
+
 const clampWidth = (width: number) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width))
 
 const loadStoredWidth = () => {
@@ -44,7 +50,7 @@ const loadStoredWidth = () => {
   return stored ? clampWidth(stored) : DEFAULT_WIDTH
 }
 
-const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSubcategoryDeleted, activeNav, onGoHome, onShowAll }: SidebarProps) => {
+const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, activeNav, onGoHome, onShowAll, onShowInterviews, refreshToken }: SidebarProps) => {
   const { user, signOut } = useAuth()
   const [categories, setCategories] = useState<CategoryRecord[]>([])
   // Keyed by category id; categories default to expanded until toggled
@@ -108,10 +114,10 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
 
   useEffect(() => {
     fetchCategories()
-      .then(setCategories)
+      .then(data => { setCategories(data); setError(null) })
       .catch(reportLoadError)
       .finally(() => setLoading(false))
-  }, [])
+  }, [refreshToken])
 
   const isExpanded = (categoryId: number) => expanded[categoryId] ?? true
 
@@ -119,9 +125,8 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
     setExpanded(prev => ({ ...prev, [categoryId]: !(prev[categoryId] ?? true) }))
   }
 
-  const handleSelectSubcategory = (subcategoryName: string) => {
-    onSelectCategory(subcategoryName)
-    onSelectSubcategory?.(subcategoryName)
+  const handleSelectSubcategory = (subcategoryName: string, options?: { replace?: boolean }) => {
+    onSelectSubcategory(subcategoryName, options)
   }
 
   const closeNameDialog = useCallback(() => setNameDialog(null), [])
@@ -179,7 +184,7 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
     onSubmit: async name => {
       await updateSubcategory(subcategory.id, name)
       // Re-select under the new name so the open question list follows the rename
-      if (selectedCategory === subcategory.name) handleSelectSubcategory(name)
+      if (selectedCategory === subcategory.name) handleSelectSubcategory(name, { replace: true })
       await loadCategories()
     },
   })
@@ -190,7 +195,6 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
     confirmLabel: 'Delete',
     onConfirm: async () => {
       await deleteSubcategory(subcategory.id)
-      if (selectedCategory === subcategory.name) onSelectCategory(null)
       onSubcategoryDeleted?.(subcategory.name)
       await loadCategories()
     },
@@ -209,6 +213,9 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
           <button type="button" className={`sidebar-icon-btn ${activeNav === 'all' ? 'active' : ''}`} onClick={onShowAll} title="All questions" aria-label="All questions">
             <BsQuestionCircle />
           </button>
+          <button type="button" className={`sidebar-icon-btn ${activeNav === 'interviews' ? 'active' : ''}`} onClick={onShowInterviews} title="Interviews" aria-label="Interviews">
+            <BsClipboardCheck />
+          </button>
           <button type="button" className="sidebar-icon-btn sidebar-signout-collapsed" onClick={signOut} title="Sign out" aria-label="Sign out">
             <MdLogout />
           </button>
@@ -221,9 +228,9 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
     <div className="sidebar-wrapper" style={{ width }}>
     <div className="sidebar">
       <div className="sidebar-header">
-        <div className="logo" onClick={onGoHome}>
-          <span className="logo-icon">📋</span>
-          <span>Interview Companion</span>
+        <div className="logo" role="link" tabIndex={0} onClick={onGoHome} onKeyDown={e => { if (e.key === 'Enter') onGoHome() }}>
+          <img className="logo-img" src={logo} alt="" />
+          <span>Saarthi</span>
         </div>
         <button type="button" className="sidebar-icon-btn" onClick={() => setCollapsed(true)} title="Collapse sidebar" aria-label="Collapse sidebar">
           <MdMenuOpen />
@@ -239,13 +246,21 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
           <span className="nav-icon"><BsQuestionCircle /></span>
           <span>All Questions</span>
         </button>
+        <button type="button" className={`nav-item ${activeNav === 'interviews' ? 'active' : ''}`} onClick={onShowInterviews}>
+          <span className="nav-icon"><BsClipboardCheck /></span>
+          <span>Interviews</span>
+        </button>
       </nav>
 
       <div className="categories-section">
         <h3 className="section-title">Categories</h3>
 
         {loading && <p className="loading">Loading categories...</p>}
-        {error && <p className="error">Error: {error}</p>}
+        {error && (
+          <p className="error">
+            Couldn't load categories. <button type="button" className="sidebar-retry" onClick={() => { setError(null); loadCategories() }}>Retry</button>
+          </p>
+        )}
 
         {!loading && !error && categories.length === 0 && (
           <p className="empty-hint">No categories yet</p>
@@ -289,8 +304,9 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
                   <button
                     type="button"
                     className="item-action-btn danger"
-                    title="Delete category"
+                    title={questionCountOf(category) > 0 ? `Can't delete: ${questionCountOf(category)} questions inside` : 'Delete category'}
                     aria-label={`Delete ${category.name}`}
+                    disabled={questionCountOf(category) > 0}
                     onClick={e => { e.stopPropagation(); openDeleteCategory(category) }}
                   >
                     <MdDelete />
@@ -312,10 +328,11 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
                       role="button"
                       tabIndex={0}
                       onClick={() => handleSelectSubcategory(subcategory.name)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleSelectSubcategory(subcategory.name) }}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectSubcategory(subcategory.name) } }}
                     >
                       <MdKeyboardArrowRight className="subcategory-arrow" />
                       <span className="subcategory-name">{subcategory.name}</span>
+                      <span className="count-badge" aria-label={`${subcategory.question_count ?? 0} questions`}>{subcategory.question_count ?? 0}</span>
                       <div className="item-actions">
                         <button
                           type="button"
@@ -329,8 +346,9 @@ const Sidebar = ({ selectedCategory, onSelectCategory, onSelectSubcategory, onSu
                         <button
                           type="button"
                           className="item-action-btn danger"
-                          title="Delete subcategory"
+                          title={(subcategory.question_count ?? 0) > 0 ? `Can't delete: ${subcategory.question_count} questions inside` : 'Delete subcategory'}
                           aria-label={`Delete ${subcategory.name}`}
+                          disabled={(subcategory.question_count ?? 0) > 0}
                           onClick={e => { e.stopPropagation(); openDeleteSubcategory(subcategory) }}
                         >
                           <MdDelete />

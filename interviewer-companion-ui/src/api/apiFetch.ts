@@ -18,8 +18,7 @@ export const toImageUrl = (url: string) =>
 
 export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
 
-const sha256Hex = async (body: string): Promise<string> => {
-  const bytes = new TextEncoder().encode(body)
+const sha256Hex = async (bytes: BufferSource): Promise<string> => {
   const hash = await crypto.subtle.digest('SHA-256', bytes)
 
   return Array.from(new Uint8Array(hash))
@@ -28,23 +27,31 @@ const sha256Hex = async (body: string): Promise<string> => {
 }
 
 // Sends the session cookie and signs body-bearing requests for CloudFront OAC.
+// OAC needs the payload hash, so non-string bodies (e.g. FormData) are serialized
+// to bytes up front, keeping the generated multipart Content-Type/boundary.
 export const apiFetch = async (
   input: string,
   init: RequestInit = {},
 ) => {
   const headers = new Headers(init.headers)
   const method = (init.method || 'GET').toUpperCase()
-  const body = init.body
+  let body = init.body
 
-  if (
-    typeof body === 'string' &&
-    ['POST', 'PUT', 'PATCH'].includes(method)
-  ) {
-    headers.set('x-amz-content-sha256', await sha256Hex(body))
+  if (body != null && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    const serialized = new Response(body)
+    const contentType = serialized.headers.get('content-type')
+    const bytes = await serialized.arrayBuffer()
+
+    if (contentType && !headers.has('content-type')) {
+      headers.set('content-type', contentType)
+    }
+    headers.set('x-amz-content-sha256', await sha256Hex(bytes))
+    body = bytes
   }
 
   const response = await fetch(input, {
     ...init,
+    body,
     headers,
     credentials: 'include',
   })

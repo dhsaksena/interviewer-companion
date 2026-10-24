@@ -1,4 +1,37 @@
+import { access, readFile } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import mysql from 'mysql2/promise'
+
+// sql/ sits at the server root, two levels above both src/database and dist/database.
+// In the Lambda bundle it is shipped next to index.mjs instead.
+const HERE = path.dirname(fileURLToPath(import.meta.url))
+const SQL_DIR_CANDIDATES = [path.join(HERE, '../../sql'), path.join(HERE, 'sql')]
+
+const findSqlDir = async () => {
+  for (const dir of SQL_DIR_CANDIDATES) {
+    try {
+      await access(dir)
+      return dir
+    } catch {
+      // try the next location
+    }
+  }
+  throw new Error(`SQL directory not found (looked in ${SQL_DIR_CANDIDATES.join(', ')})`)
+}
+
+// Runs every statement in a .sql file from the sql/ directory (statements end with ';' at end of line)
+const runSqlFile = async (connection: mysql.Connection, fileName: string) => {
+  const sql = await readFile(path.join(await findSqlDir(), fileName), 'utf8')
+  const statements = sql
+    .split(/;\s*$/m)
+    .map(statement => statement.replace(/^\s*--.*$/gm, '').trim())
+    .filter(Boolean)
+
+  for (const statement of statements) {
+    await connection.query(statement)
+  }
+}
 
 const questionsTableDdl = (tableName: string) => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
@@ -49,6 +82,17 @@ const migrateQuestionIdsToInt = async (connection: mysql.Connection, dbName: str
   console.log(
     `Migrated questions.id to INT AUTO_INCREMENT. Original table kept as ${LEGACY_QUESTIONS_TABLE}`
   )
+}
+
+// MySQL has no ADD COLUMN IF NOT EXISTS, so check information_schema first (keeps db:init re-runnable)
+const addColumnIfMissing = async (connection: mysql.Connection, dbName: string, table: string, column: string, definition: string) => {
+  const [rows] = await connection.query(
+    'SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+    [dbName, table, column]
+  )
+  if ((rows as unknown[]).length === 0) {
+    await connection.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+  }
 }
 
 export const initializeDatabase = async () => {
@@ -110,6 +154,11 @@ export const initializeDatabase = async () => {
 
     await migrateQuestionIdsToInt(connection, dbName)
     await connection.query(questionsTableDdl('questions'))
+    await runSqlFile(connection, 'interviews.sql')
+    await addColumnIfMissing(connection, dbName, 'interviews', 'status', "VARCHAR(20) NOT NULL DEFAULT 'draft'")
+    await addColumnIfMissing(connection, dbName, 'interviews', 'interview_date', 'DATE NULL')
+    await addColumnIfMissing(connection, dbName, 'interview_rubrics', 'rating', 'TINYINT NULL')
+    await addColumnIfMissing(connection, dbName, 'interview_rubrics', 'feedback', 'TEXT NULL')
 
     const [categories] = await connection.query(
       'SELECT COUNT(*) as count FROM categories'

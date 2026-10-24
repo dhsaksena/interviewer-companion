@@ -315,3 +315,35 @@
 .sidebar-user-email { color: var(--nav-muted); font-size: 11px; }
 
 .sidebar-signout-collapsed { margin-top: auto; }
+
+.logo-img { width: 24px; height: 24px; object-fit: contain; }
+.logo { cursor: pointer; }
+
+.count-badge {
+  flex-shrink: 0;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--nav-line);
+  color: var(--nav-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.item-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.sidebar-retry {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--accent-on-dark);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* No hover on touch screens: keep rename/delete reachable */
+@media (hover: none) {
+  .item-actions { opacity: 1; }
+}

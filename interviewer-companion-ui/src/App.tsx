@@ -1,105 +1,79 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import './App.css'
 import Sidebar from './components/Sidebar'
+import UnsavedChangesDialog from './components/UnsavedChangesDialog'
 import AddQuestionPage from './pages/AddQuestionPage'
 import QuestionsListPage from './pages/QuestionsListPage'
 import QuestionEditPage from './pages/QuestionEditPage'
 import QuestionViewPage from './pages/QuestionViewPage'
+import InterviewsPage from './pages/InterviewsPage'
+import InterviewViewPage from './pages/InterviewViewPage'
+import InterviewEditPage from './pages/InterviewEditPage'
 import HomePage from './pages/HomePage'
 import LandingPage from './pages/LandingPage'
 import { useAuth } from './auth/AuthContext'
+import { navigate, paths, useRoute } from './router'
 
-type PageType = 'home' | 'add-question' | 'questions-list' | 'edit-question' | 'view-question'
+// "/" focuses the search box and "n" starts a new item on list pages, unless the user is typing
+const useShortcuts = () => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const target = e.target as HTMLElement | null
+      if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return
+      if (document.querySelector('[role="dialog"]')) return
+
+      if (e.key === '/') {
+        const search = document.querySelector<HTMLInputElement>('input[type="search"]')
+        if (search) { e.preventDefault(); search.focus() }
+      } else if (e.key === 'n') {
+        const add = document.querySelector<HTMLButtonElement>('.fab')
+        if (add) { e.preventDefault(); add.click() }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+}
 
 function MainApp()
 {
-  // Name of the subcategory highlighted in the sidebar
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState<PageType>('home')
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
-  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null)
+  const route = useRoute()
+  useShortcuts()
 
-  const handleBackToHome = () => {
-    setCurrentPage('home')
-    setSelectedCategory(null)
-    setSelectedSubcategory(null)
-    setSelectedQuestionId(null)
-  }
+  const selectedSubcategory = route.name === 'questions' || route.name === 'question-new' ? route.sub : null
 
-  const handleShowAll = () => {
-    setSelectedCategory(null)
-    setSelectedSubcategory(null)
-    setSelectedQuestionId(null)
-    setCurrentPage('questions-list')
-  }
-
-  const handleSelectSubcategory = (subcategory: string) => {
-    setSelectedCategory(subcategory)
-    setSelectedSubcategory(subcategory)
-    setCurrentPage('questions-list')
-  }
-
-  const handleSelectQuestion = (questionId: number) => {
-    setSelectedQuestionId(questionId)
-    setCurrentPage('edit-question')
-  }
-
-  const handleViewQuestion = (questionId: number) => {
-    setSelectedQuestionId(questionId)
-    setCurrentPage('view-question')
-  }
-
-  // The list page is shared by "All questions" (no subcategory) and a single subcategory
-  const backToList = () => setCurrentPage('questions-list')
-
-  const activeNav = currentPage === 'home' ? 'home' : currentPage === 'questions-list' && !selectedSubcategory ? 'all' : null
+  const activeNav = route.name === 'home' ? 'home'
+    : route.name === 'questions' && !route.sub ? 'all'
+    : route.name.startsWith('interview') ? 'interviews'
+    : null
 
   return (
     <div className="app-container">
       <Sidebar
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-        onSelectSubcategory={handleSelectSubcategory}
+        selectedCategory={selectedSubcategory}
+        refreshToken={route.name}
+        onSelectSubcategory={(name, options) => navigate(paths.questions(name), options)}
         onSubcategoryDeleted={name => {
-          if (name === selectedSubcategory) handleBackToHome()
+          if (name === selectedSubcategory) navigate(paths.home())
         }}
         activeNav={activeNav}
-        onGoHome={handleBackToHome}
-        onShowAll={handleShowAll}
+        onGoHome={() => navigate(paths.home())}
+        onShowAll={() => navigate(paths.questions())}
+        onShowInterviews={() => navigate(paths.interviews())}
       />
 
-      {currentPage === 'home' && (
-        <HomePage onSelectSubcategory={handleSelectSubcategory} onShowAll={handleShowAll} />
-      )}
+      {route.name === 'home' && <HomePage />}
+      {route.name === 'questions' && <QuestionsListPage selectedSubcategory={route.sub} />}
+      {route.name === 'question-new' && <AddQuestionPage initialSubcategory={route.sub} />}
+      {route.name === 'question-view' && <QuestionViewPage key={route.id} questionId={route.id} from={route.from} />}
+      {route.name === 'question-edit' && <QuestionEditPage key={route.id} questionId={route.id} from={route.from} />}
+      {route.name === 'interviews' && <InterviewsPage />}
+      {route.name === 'interview-new' && <InterviewEditPage key="new" interviewId={null} />}
+      {route.name === 'interview-view' && <InterviewViewPage key={route.id} interviewId={route.id} />}
+      {route.name === 'interview-edit' && <InterviewEditPage key={route.id} interviewId={route.id} />}
 
-      {currentPage === 'add-question' && (
-        <AddQuestionPage onBack={backToList} initialSubcategory={selectedSubcategory} />
-      )}
-
-      {currentPage === 'questions-list' && (
-        <QuestionsListPage
-          selectedSubcategory={selectedSubcategory}
-          onBack={handleBackToHome}
-          onSelectQuestion={handleSelectQuestion}
-          onViewQuestion={handleViewQuestion}
-          onAddQuestion={() => setCurrentPage('add-question')}
-        />
-      )}
-
-      {currentPage === 'view-question' && selectedQuestionId && (
-        <QuestionViewPage
-          questionId={selectedQuestionId}
-          onBack={backToList}
-          onEdit={handleSelectQuestion}
-        />
-      )}
-
-      {currentPage === 'edit-question' && selectedQuestionId && (
-        <QuestionEditPage
-          questionId={selectedQuestionId}
-          onBack={backToList}
-        />
-      )}
+      <UnsavedChangesDialog />
     </div>
   )
 }

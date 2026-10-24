@@ -16,10 +16,12 @@ export class CategoriesService {
 
       for (const category of result) {
         const [subcategories] = await connection.query(
-          'SELECT id, category_id, name, created_at, updated_at FROM subcategories WHERE category_id = ? ORDER BY name ASC',
+          `SELECT s.id, s.category_id, s.name, s.created_at, s.updated_at,
+             (SELECT COUNT(*) FROM questions q WHERE q.subcategory_id = s.id) AS question_count
+           FROM subcategories s WHERE s.category_id = ? ORDER BY s.name ASC`,
           [category.id]
         )
-        category.subcategories = subcategories as any[]
+        category.subcategories = (subcategories as any[]).map(sub => ({ ...sub, question_count: Number(sub.question_count) }))
       }
 
       return result

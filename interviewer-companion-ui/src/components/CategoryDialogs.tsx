@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import './CategoryDialogs.css'
+import Modal from './Modal'
 
 const errorMessage = (err: unknown) => (err instanceof Error ? err.message : 'Something went wrong')
 
@@ -9,30 +10,12 @@ interface DialogShellProps {
   children: ReactNode
 }
 
-const DialogShell = ({ title, onClose, children }: DialogShellProps) => {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
-
-  return (
-    <div className="dialog-overlay" onClick={onClose}>
-      <div
-        className="dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={e => e.stopPropagation()}
-      >
-        <h2 className="dialog-title">{title}</h2>
-        {children}
-      </div>
-    </div>
-  )
-}
+const DialogShell = ({ title, onClose, children }: DialogShellProps) => (
+  <Modal title={title} onClose={onClose}>
+    <h2 className="dialog-title">{title}</h2>
+    {children}
+  </Modal>
+)
 
 export interface NameDialogProps {
   title: string
@@ -96,11 +79,15 @@ export interface ConfirmDialogProps {
   title: string
   message: string
   confirmLabel: string
+  busyLabel?: string
+  // Non-destructive confirmations (e.g. leaving a page) use the regular button style
+  tone?: 'danger' | 'primary'
+  cancelLabel?: string
   onConfirm: () => Promise<void>
   onClose: () => void
 }
 
-export const ConfirmDialog = ({ title, message, confirmLabel, onConfirm, onClose }: ConfirmDialogProps) => {
+export const ConfirmDialog = ({ title, message, confirmLabel, busyLabel = 'Deleting...', tone = 'danger', cancelLabel = 'Cancel', onConfirm, onClose }: ConfirmDialogProps) => {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -125,10 +112,10 @@ export const ConfirmDialog = ({ title, message, confirmLabel, onConfirm, onClose
 
       <div className="dialog-actions">
         <button type="button" className="dialog-btn secondary" onClick={onClose} disabled={submitting}>
-          Cancel
+          {cancelLabel}
         </button>
-        <button type="button" className="dialog-btn danger" onClick={handleConfirm} disabled={submitting}>
-          {submitting ? 'Deleting...' : confirmLabel}
+        <button type="button" className={`dialog-btn ${tone}`} onClick={handleConfirm} disabled={submitting}>
+          {submitting ? busyLabel : confirmLabel}
         </button>
       </div>
     </DialogShell>

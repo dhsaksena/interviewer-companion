@@ -167,3 +167,25 @@
   .fab span { display: none; }
   .fab { width: 56px; padding: 0; justify-content: center; }
 }
+
+.questions-table .col-check { width: 40px; padding-right: 0; }
+.questions-table .col-topic { width: 200px; }
+.questions-table .col-actions { width: 132px; }
+.questions-table tbody tr.iv-selected { background: var(--accent-soft); }
+.questions-table th.iv-sortable button { text-transform: inherit; }
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+.bulk-bar strong { margin-right: 6px; }
+
+/* Keep the floating button from covering the last rows */
+.page-body { padding-bottom: 110px; }

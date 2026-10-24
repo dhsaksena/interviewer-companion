@@ -35,4 +35,9 @@ export const config = {
   s3PublicBaseUrl: (process.env.S3_PUBLIC_BASE_URL || '').replace(/\/$/, ''),
   // Lambda instances handle one request at a time, so keep the pool small
   dbConnectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || (process.env.AWS_LAMBDA_FUNCTION_NAME ? '2' : '10'), 10),
+  aiProvider: process.env.AI_PROVIDER || 'claude',
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+  awsRegion: process.env.AWS_REGION || 'ap-southeast-2',
+  bedrockModelId: process.env.BEDROCK_MODEL_ID || '',
 }

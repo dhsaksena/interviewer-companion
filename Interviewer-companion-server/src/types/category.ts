@@ -2,6 +2,7 @@ export interface Subcategory {
   id: number
   category_id: number
   name: string
+  question_count?: number
   created_at: Date
   updated_at: Date
 }

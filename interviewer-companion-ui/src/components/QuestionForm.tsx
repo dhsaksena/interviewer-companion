@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import '../styles/QuestionForm.css'
 import type { CategoryRecord } from '../types'
 import RichTextEditor from './RichTextEditor'
 import ImageModal from './ImageModal'
 import { MdImage, MdClose } from 'react-icons/md'
+import { useUnsavedGuard } from '../router'
 
 export const DIFFICULTIES = ['Easy', 'Medium', 'Hard'] as const
 export const TYPES = ['Conceptual', 'Coding', 'Scenario', 'Behavioural'] as const
@@ -74,8 +75,26 @@ const Segmented = <T extends string>({ label, options, value, onChange, disabled
   </div>
 )
 
+type DraftFields = Omit<QuestionFormData, 'solutionImage'>
+
+const readDraft = (key: string | undefined): DraftFields | null => {
+  if (!key) return null
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as DraftFields) : null
+  } catch {
+    return null
+  }
+}
+
+const isBlank = (d: DraftFields) => !d.title.trim() && !d.content.replace(/<[^>]*>/g, '').trim() && !d.solution.replace(/<[^>]*>/g, '').trim()
+
 interface QuestionFormProps {
   initial: QuestionFormData
+  // Autosaves what's typed under this localStorage key and restores it next time (new questions only)
+  draftKey?: string
+  // Extra submit button that saves and keeps the form open for the next question
+  secondarySubmit?: { label: string; onSubmit: (data: QuestionFormData) => void }
   existingImageUrl?: string | null
   categories: CategoryRecord[]
   submitLabel: string
@@ -85,8 +104,13 @@ interface QuestionFormProps {
   onCancel: () => void
 }
 
-const QuestionForm = ({ initial, existingImageUrl, categories, submitLabel, saving, error, onSubmit, onCancel }: QuestionFormProps) => {
-  const [data, setData] = useState<QuestionFormData>(initial)
+const QuestionForm = ({ initial, draftKey, secondarySubmit, existingImageUrl, categories, submitLabel, saving, error, onSubmit, onCancel }: QuestionFormProps) => {
+  const [draft] = useState(() => {
+    const stored = readDraft(draftKey)
+    return stored && !isBlank(stored) ? stored : null
+  })
+  const [restored, setRestored] = useState(draft !== null)
+  const [data, setData] = useState<QuestionFormData>(() => (draft ? { ...initial, ...draft, solutionImage: null } : initial))
   const [errors, setErrors] = useState<Errors>({})
   const [imagePreview, setImagePreview] = useState<string | null>(existingImageUrl ?? null)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
@@ -94,6 +118,37 @@ const QuestionForm = ({ initial, existingImageUrl, categories, submitLabel, savi
   const update = <K extends keyof QuestionFormData>(key: K, value: QuestionFormData[K]) => {
     setData(prev => ({ ...prev, [key]: value }))
     if (key in errors) setErrors(prev => ({ ...prev, [key]: undefined }))
+  }
+
+  const dirty = JSON.stringify({ ...data, solutionImage: data.solutionImage?.name ?? null })
+    !== JSON.stringify({ ...initial, solutionImage: null })
+
+  // A draft is already kept safe in localStorage, so only forms without one need the leave warning
+  useUnsavedGuard(dirty && !saving && !draftKey)
+
+  useEffect(() => {
+    if (!draftKey || saving) return
+    const timer = setTimeout(() => {
+      const fields: DraftFields = {
+        title: data.title, category: data.category, subcategory: data.subcategory, difficulty: data.difficulty,
+        type: data.type, content: data.content, solution: data.solution,
+      }
+      if (isBlank(fields)) localStorage.removeItem(draftKey)
+      else localStorage.setItem(draftKey, JSON.stringify(fields))
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [data, draftKey, saving])
+
+  const discardDraft = () => {
+    if (draftKey) localStorage.removeItem(draftKey)
+    setData(initial)
+    setImagePreview(existingImageUrl ?? null)
+    setRestored(false)
+  }
+
+  const handleCancel = () => {
+    if (draftKey) localStorage.removeItem(draftKey)
+    onCancel()
   }
 
   const subcategories = categories.find(c => c.name === data.category)?.subcategories ?? []
@@ -112,21 +167,41 @@ const QuestionForm = ({ initial, existingImageUrl, categories, submitLabel, savi
     update('solutionImage', null)
   }
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const validate = () => {
     const next: Errors = {}
     if (!data.title.trim()) next.title = 'Enter a title for the question'
     if (!data.category) next.category = 'Choose a category'
     if (!data.subcategory) next.subcategory = 'Choose a subcategory'
     if (!data.content.replace(/<[^>]*>/g, '').trim()) next.content = 'Write the question content'
     setErrors(next)
-    if (Object.keys(next).length === 0) onSubmit(data)
+    return Object.keys(next).length === 0
+  }
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    if (validate()) {
+      if (draftKey) localStorage.removeItem(draftKey)
+      onSubmit(data)
+    }
+  }
+
+  const handleSubmitAnother = () => {
+    if (validate() && secondarySubmit) {
+      if (draftKey) localStorage.removeItem(draftKey)
+      secondarySubmit.onSubmit(data)
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className="question-form" noValidate>
       <div className="form-scroll">
         {error && <div className="alert alert-error" role="alert">{error}</div>}
+        {restored && (
+          <div className="alert alert-info" role="status">
+            <span>Restored your unsaved draft.</span>
+            <button type="button" className="btn btn-secondary" onClick={discardDraft}>Discard draft</button>
+          </div>
+        )}
 
         <div className="form-grid">
           <section className="form-card">
@@ -244,7 +319,10 @@ const QuestionForm = ({ initial, existingImageUrl, categories, submitLabel, savi
       </div>
 
       <div className="form-footer">
-        <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={saving}>Cancel</button>
+        <button type="button" className="btn btn-secondary" onClick={handleCancel} disabled={saving}>Cancel</button>
+        {secondarySubmit && (
+          <button type="button" className="btn btn-secondary" onClick={handleSubmitAnother} disabled={saving}>{secondarySubmit.label}</button>
+        )}
         <button type="submit" className="btn btn-primary" disabled={saving}>
           {saving ? 'Saving...' : submitLabel}
         </button>

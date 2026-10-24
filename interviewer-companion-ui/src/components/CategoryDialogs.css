@@ -113,3 +113,6 @@
 .dialog-btn.danger:hover:not(:disabled) {
   background: #b83636;
 }
+
+.dialog-hint { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
+.dialog-hint.warn { color: var(--medium); }
