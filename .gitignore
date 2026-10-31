@@ -1,1 +1,9 @@
-node_modules/\n.DS_Store\ndist/\nbuild/\n.env.local\n.env
+node_modules/
+.DS_Store
+dist/
+build/
+
+# Environment files hold secrets (API keys, session secret); only the templates are committed
+.env
+.env.*
+!.env.example
