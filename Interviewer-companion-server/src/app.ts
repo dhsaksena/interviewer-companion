@@ -13,6 +13,7 @@ import questionsRouter from './routes/questions.js'
 import categoriesRouter from './routes/categories.js'
 import subcategoriesRouter from './routes/subcategories.js'
 import interviewsRouter from './routes/interviews.js'
+import candidatesRouter from './routes/candidates.js'
 
 const app = express()
 
@@ -39,7 +40,7 @@ app.use(
       httpOnly: true,
       sameSite: config.cookieSameSite,
       secure: config.isProduction,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: config.sessionTtlMs,
     },
   })
 )
@@ -50,6 +51,7 @@ app.use('/api/questions', requireAuth, questionsRouter)
 app.use('/api/categories', requireAuth, categoriesRouter)
 app.use('/api/subcategories', requireAuth, subcategoriesRouter)
 app.use('/api/interviews', requireAuth, interviewsRouter)
+app.use('/api/candidates', requireAuth, candidatesRouter)
 
 
 app.use(errorHandler)

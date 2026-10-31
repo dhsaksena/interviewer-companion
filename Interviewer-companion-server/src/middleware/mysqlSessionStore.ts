@@ -1,15 +1,15 @@
 import session from 'express-session'
 import type mysql from 'mysql2/promise'
+import { config } from '../config/index.js'
 import { getPool } from '../database/connection.js'
 
-const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const PRUNE_PROBABILITY = 0.01
 
 // Lambda instances don't share memory, so sessions are kept in MySQL (table created by db:init).
 export class MySqlSessionStore extends session.Store {
   private expiresAt(data: session.SessionData) {
     const cookieExpiry = data.cookie?.expires ? new Date(data.cookie.expires).getTime() : NaN
-    return Number.isNaN(cookieExpiry) ? Date.now() + DEFAULT_TTL_MS : cookieExpiry
+    return Number.isNaN(cookieExpiry) ? Date.now() + config.sessionTtlMs : cookieExpiry
   }
 
   get(sid: string, callback: (err?: unknown, session?: session.SessionData | null) => void) {

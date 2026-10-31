@@ -159,6 +159,7 @@ export const initializeDatabase = async () => {
     await addColumnIfMissing(connection, dbName, 'interviews', 'interview_date', 'DATE NULL')
     await addColumnIfMissing(connection, dbName, 'interview_rubrics', 'rating', 'TINYINT NULL')
     await addColumnIfMissing(connection, dbName, 'interview_rubrics', 'feedback', 'TEXT NULL')
+    await runSqlFile(connection, 'candidates.sql')
 
     const [categories] = await connection.query(
       'SELECT COUNT(*) as count FROM categories'

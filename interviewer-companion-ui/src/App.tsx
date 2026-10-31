@@ -9,6 +9,8 @@ import QuestionViewPage from './pages/QuestionViewPage'
 import InterviewsPage from './pages/InterviewsPage'
 import InterviewViewPage from './pages/InterviewViewPage'
 import InterviewEditPage from './pages/InterviewEditPage'
+import CandidatesPage from './pages/CandidatesPage'
+import CandidateViewPage from './pages/CandidateViewPage'
 import HomePage from './pages/HomePage'
 import LandingPage from './pages/LandingPage'
 import { useAuth } from './auth/AuthContext'
@@ -46,6 +48,7 @@ function MainApp()
   const activeNav = route.name === 'home' ? 'home'
     : route.name === 'questions' && !route.sub ? 'all'
     : route.name.startsWith('interview') ? 'interviews'
+    : route.name.startsWith('candidate') ? 'candidates'
     : null
 
   return (
@@ -61,6 +64,7 @@ function MainApp()
         onGoHome={() => navigate(paths.home())}
         onShowAll={() => navigate(paths.questions())}
         onShowInterviews={() => navigate(paths.interviews())}
+        onShowCandidates={() => navigate(paths.candidates())}
       />
 
       {route.name === 'home' && <HomePage />}
@@ -72,6 +76,8 @@ function MainApp()
       {route.name === 'interview-new' && <InterviewEditPage key="new" interviewId={null} />}
       {route.name === 'interview-view' && <InterviewViewPage key={route.id} interviewId={route.id} />}
       {route.name === 'interview-edit' && <InterviewEditPage key={route.id} interviewId={route.id} />}
+      {route.name === 'candidates' && <CandidatesPage />}
+      {route.name === 'candidate-view' && <CandidateViewPage key={route.id} candidateId={route.id} view={route.view} />}
 
       <UnsavedChangesDialog />
     </div>

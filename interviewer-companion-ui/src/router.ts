@@ -13,6 +13,10 @@ export type Route =
   | { name: 'interview-new' }
   | { name: 'interview-view'; id: number }
   | { name: 'interview-edit'; id: number }
+  | { name: 'candidates' }
+  | { name: 'candidate-view'; id: number; view: CandidateView }
+
+export type CandidateView = 'graph' | 'details'
 
 const withQuery = (path: string, params: Record<string, string | null | undefined>) => {
   const query = new URLSearchParams()
@@ -31,6 +35,8 @@ export const paths = {
   interviewNew: () => '/interviews/new',
   interviewView: (id: number) => `/interviews/${id}`,
   interviewEdit: (id: number) => `/interviews/${id}/edit`,
+  candidates: () => '/candidates',
+  candidateView: (id: number, view: CandidateView = 'graph') => withQuery(`/candidates/${id}`, { view: view === 'graph' ? null : view }),
 }
 
 export const parseRoute = (path: string): Route => {
@@ -51,6 +57,10 @@ export const parseRoute = (path: string): Route => {
     if (parts[1] === 'new') return { name: 'interview-new' }
     if (validId && parts.length === 2) return { name: 'interview-view', id }
     if (validId && parts[2] === 'edit') return { name: 'interview-edit', id }
+  }
+  if (parts[0] === 'candidates') {
+    if (parts.length === 1) return { name: 'candidates' }
+    if (validId && parts.length === 2) return { name: 'candidate-view', id, view: query.get('view') === 'details' ? 'details' : 'graph' }
   }
   return { name: 'home' }
 }

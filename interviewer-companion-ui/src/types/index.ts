@@ -112,3 +112,105 @@ export interface InterviewUsage {
   title: string
   candidateName: string
 }
+
+// Candidate profile extracted from a resume. Dates are "YYYY-MM" or "YYYY"; ongoing ones end with "Present"
+export interface CandidateProfileLink {
+  platform: string
+  url: string
+}
+
+export interface CandidateEducation {
+  institution: string
+  degree?: string
+  fieldOfStudy?: string
+  startDate?: string
+  endDate?: string
+}
+
+export interface CandidateProject {
+  name: string
+  description: string
+  technologies: string[]
+  contributions: string[]
+}
+
+export interface CandidateExperience {
+  company: string
+  title: string
+  startDate?: string
+  endDate?: string
+  description: string[]
+  projects: CandidateProject[]
+}
+
+export interface CandidateProfile {
+  fullName: string
+  headline?: string
+  email?: string
+  phone?: string
+  location?: string
+  summary?: string
+  profileLinks: CandidateProfileLink[]
+  education: CandidateEducation[]
+  // Most recent role first
+  experience: CandidateExperience[]
+  skills: string[]
+  certifications: string[]
+}
+
+export interface Candidate {
+  id: number
+  profile: CandidateProfile
+  warnings: string[]
+  resumeFileName: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CandidateSummary {
+  id: number
+  fullName: string
+  email: string
+  headline: string
+  topSkills: string[]
+  resumeFileName: string
+  updatedAt: string
+}
+
+// Progress streamed by the server (Server-Sent Events) for resume import and deep dives
+export type StepStatus = 'pending' | 'active' | 'done' | 'failed'
+
+export interface ProgressStep {
+  key: string
+  label: string
+  status: StepStatus
+  detail?: string
+}
+
+export interface ExtractedItem {
+  key: string
+  label: string
+  status: StepStatus
+  count?: number
+}
+
+export interface ProgressEvent {
+  percent: number
+  message: string
+  steps: ProgressStep[]
+  items?: ExtractedItem[]
+}
+
+export type DeepDiveType = 'identity' | 'career' | 'project' | 'publicFootprint' | 'skill'
+
+export interface DeepDiveResult {
+  workflowId: string
+  type: DeepDiveType
+  targetId: string
+  label: string
+  status: 'completed' | 'failed'
+  findings: string[]
+  warnings: string[]
+  placeholder: boolean
+  completedAt: string
+}

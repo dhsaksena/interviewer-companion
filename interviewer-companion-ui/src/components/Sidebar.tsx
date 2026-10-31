@@ -12,7 +12,7 @@ import {
 } from '../api/categoriesApi'
 import { NameDialog, ConfirmDialog, type NameDialogProps, type ConfirmDialogProps } from './CategoryDialogs'
 import { AiOutlineHome } from 'react-icons/ai'
-import { BsQuestionCircle, BsClipboardCheck } from 'react-icons/bs'
+import { BsQuestionCircle, BsClipboardCheck, BsPersonBadge } from 'react-icons/bs'
 import { MdKeyboardArrowRight, MdAdd, MdEdit, MdDelete, MdMenuOpen, MdMenu, MdLogout } from 'react-icons/md'
 import { useAuth } from '../auth/AuthContext'
 import logo from '../assets/saarthi-logo.png'
@@ -21,10 +21,11 @@ interface SidebarProps {
   // Name of the subcategory currently open, highlighted in the tree
   selectedCategory: string | null
   onSelectSubcategory: (subcategory: string, options?: { replace?: boolean }) => void
-  activeNav: 'home' | 'all' | 'interviews' | null
+  activeNav: 'home' | 'all' | 'interviews' | 'candidates' | null
   onGoHome: () => void
   onShowAll: () => void
   onShowInterviews: () => void
+  onShowCandidates: () => void
   onSubcategoryDeleted?: (subcategory: string) => void
   // Changes whenever the page changes, so question counts stay current
   refreshToken: string
@@ -50,7 +51,7 @@ const loadStoredWidth = () => {
   return stored ? clampWidth(stored) : DEFAULT_WIDTH
 }
 
-const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, activeNav, onGoHome, onShowAll, onShowInterviews, refreshToken }: SidebarProps) => {
+const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, activeNav, onGoHome, onShowAll, onShowInterviews, onShowCandidates, refreshToken }: SidebarProps) => {
   const { user, signOut } = useAuth()
   const [categories, setCategories] = useState<CategoryRecord[]>([])
   // Keyed by category id; categories default to expanded until toggled
@@ -216,6 +217,9 @@ const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, 
           <button type="button" className={`sidebar-icon-btn ${activeNav === 'interviews' ? 'active' : ''}`} onClick={onShowInterviews} title="Interviews" aria-label="Interviews">
             <BsClipboardCheck />
           </button>
+          <button type="button" className={`sidebar-icon-btn ${activeNav === 'candidates' ? 'active' : ''}`} onClick={onShowCandidates} title="Candidates" aria-label="Candidates">
+            <BsPersonBadge />
+          </button>
           <button type="button" className="sidebar-icon-btn sidebar-signout-collapsed" onClick={signOut} title="Sign out" aria-label="Sign out">
             <MdLogout />
           </button>
@@ -249,6 +253,10 @@ const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, 
         <button type="button" className={`nav-item ${activeNav === 'interviews' ? 'active' : ''}`} onClick={onShowInterviews}>
           <span className="nav-icon"><BsClipboardCheck /></span>
           <span>Interviews</span>
+        </button>
+        <button type="button" className={`nav-item ${activeNav === 'candidates' ? 'active' : ''}`} onClick={onShowCandidates}>
+          <span className="nav-icon"><BsPersonBadge /></span>
+          <span>Candidates</span>
         </button>
       </nav>
 

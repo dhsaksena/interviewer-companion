@@ -28,6 +28,7 @@ export const config = {
   sessionSecret: requireEnv('SESSION_SECRET'),
   // Use 'none' when the frontend and API are served from different sites (requires HTTPS)
   cookieSameSite: parseSameSite(process.env.COOKIE_SAMESITE),
+  sessionTtlMs: 7 * 24 * 60 * 60 * 1000,
   // Uploaded images go to S3 when S3_BUCKET is set, otherwise to the local uploads directory
   s3Bucket: process.env.S3_BUCKET || '',
   s3KeyPrefix: process.env.S3_KEY_PREFIX || 'uploads/',
@@ -37,7 +38,7 @@ export const config = {
   dbConnectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || (process.env.AWS_LAMBDA_FUNCTION_NAME ? '2' : '10'), 10),
   aiProvider: process.env.AI_PROVIDER || 'claude',
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
-  anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+  anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
   awsRegion: process.env.AWS_REGION || 'ap-southeast-2',
   bedrockModelId: process.env.BEDROCK_MODEL_ID || '',
 }
