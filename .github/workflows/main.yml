@@ -45,6 +45,8 @@ jobs:
           NODE_ENV: test
           GOOGLE_CLIENT_ID: test-client-id
           SESSION_SECRET: test-session-secret-for-ci-only
+          AI_PROVIDER: claude
+          ANTHROPIC_API_KEY: test-api-key
 
       - name: Package Lambda
         run: npm run package:lambda
