@@ -43,6 +43,7 @@ jobs:
         run: npm test
         env:
           NODE_ENV: test
+          GOOGLE_CLIENT_ID: test-client-id
 
       - name: Package Lambda
         run: npm run package:lambda
