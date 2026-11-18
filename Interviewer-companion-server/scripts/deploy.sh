@@ -52,7 +52,16 @@ fi
 
 # 2. Verify ---------------------------------------------------------------------
 step "Installing dependencies"
-npm ci
+# `npm ci` wipes node_modules and reinstalls everything, which is very slow on
+# /mnt/c. Skip it when package-lock.json is unchanged since the last install.
+LOCK_HASH="$(sha256sum package-lock.json | cut -d' ' -f1)"
+LOCK_STAMP="node_modules/.lock-hash"
+if [[ -d node_modules && "$(cat "$LOCK_STAMP" 2>/dev/null || true)" == "$LOCK_HASH" ]]; then
+  echo "Dependencies up to date (package-lock.json unchanged); skipping install."
+else
+  npm ci --prefer-offline --no-audit --no-fund
+  echo "$LOCK_HASH" > "$LOCK_STAMP"
+fi
 
 step "Type check"
 npm run type-check
