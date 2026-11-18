@@ -4,4 +4,4 @@ export interface ResumeAnalysisInput {
     resumeText: string
 }
 
-export interface ResumeAnalysisOutput extends ResumeExtractionResult {}
+export type ResumeAnalysisOutput = ResumeExtractionResult;
