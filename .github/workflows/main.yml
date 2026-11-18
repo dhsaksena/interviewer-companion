@@ -61,15 +61,15 @@ jobs:
       - name: Deploy Lambda
         run: |
           aws lambda update-function-code \
-            --function-name interviewer-companion-api \
+            --function-name interview-companion-api \
             --zip-file fileb://lambda.zip
 
       - name: Wait for deployment
         run: |
           aws lambda wait function-updated \
-            --function-name interviewer-companion-api
+            --function-name interview-companion-api
 
       - name: Verify deployment
         run: |
           aws lambda get-function \
-            --function-name interviewer-companion-api
+            --function-name interview-companion-api

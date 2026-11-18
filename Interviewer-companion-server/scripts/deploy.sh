@@ -8,7 +8,7 @@
 # Env overrides: FUNCTION_NAME, AWS_REGION, AWS_PROFILE
 set -euo pipefail
 
-FUNCTION_NAME="${FUNCTION_NAME:-interviewer-companion-api}"
+FUNCTION_NAME="${FUNCTION_NAME:-interview-companion-api}"
 AWS_REGION="${AWS_REGION:-$(aws configure get region 2>/dev/null || true)}"
 : "${AWS_REGION:?Set AWS_REGION or run aws configure}"
 export AWS_REGION
