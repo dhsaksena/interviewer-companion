@@ -1,4 +1,4 @@
-.saarthi-landing {
+.evalnext-landing {
       --navy: #111b3b;
       --blue: #315cff;
       --blue-dark: #2449e8;
@@ -156,15 +156,15 @@
     }
   
 }
-.saarthi-landing button { font: inherit; cursor: pointer; }
+.evalnext-landing button { font: inherit; cursor: pointer; }
 
-.saarthi-landing .signin-backdrop { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(17, 27, 59, .45); padding: 16px; }
-.saarthi-landing .signin-dialog { width: min(380px, 100%); background: #fff; border-radius: 16px; padding: 32px 28px 24px; text-align: center; box-shadow: var(--shadow); }
-.saarthi-landing .signin-logo { width: 48px; height: 48px; object-fit: contain; border-radius: 10px; }
-.saarthi-landing .signin-dialog h2 { margin: 14px 0 6px; font-size: 22px; letter-spacing: -.5px; }
-.saarthi-landing .signin-dialog p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
-.saarthi-landing .signin-button-row { display: flex; justify-content: center; min-height: 44px; }
-.saarthi-landing .signin-status { margin: 14px 0 0; }
-.saarthi-landing .signin-error { margin: 14px 0 0; color: #d64545; }
-.saarthi-landing .signin-cancel { margin-top: 18px; border: 0; background: none; color: var(--muted); font-size: 13px; }
-.saarthi-landing .signin-cancel:hover { color: var(--blue); }
+.evalnext-landing .signin-backdrop { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(17, 27, 59, .45); padding: 16px; }
+.evalnext-landing .signin-dialog { width: min(380px, 100%); background: #fff; border-radius: 16px; padding: 32px 28px 24px; text-align: center; box-shadow: var(--shadow); }
+.evalnext-landing .signin-logo { width: 48px; height: 48px; object-fit: contain; border-radius: 10px; }
+.evalnext-landing .signin-dialog h2 { margin: 14px 0 6px; font-size: 22px; letter-spacing: -.5px; }
+.evalnext-landing .signin-dialog p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+.evalnext-landing .signin-button-row { display: flex; justify-content: center; min-height: 44px; }
+.evalnext-landing .signin-status { margin: 14px 0 0; }
+.evalnext-landing .signin-error { margin: 14px 0 0; color: #d64545; }
+.evalnext-landing .signin-cancel { margin-top: 18px; border: 0; background: none; color: var(--muted); font-size: 13px; }
+.evalnext-landing .signin-cancel:hover { color: var(--blue); }

@@ -40,7 +40,7 @@ const HomePage = () => {
     <div className="page">
       <div className="page-body">
         <div className="home-column">
-          <h1 className="home-title">Saarthi</h1>
+          <h1 className="home-title">EvalNext</h1>
           <p className="home-subtitle">Plan interviews, keep your question bank organised, and capture feedback as you go.</p>
 
           <div className="home-actions">

@@ -1,4 +1,4 @@
-# Saarthi – Interview Companion (UI)
+# EvalNext – Interview Companion (UI)
 
 React + Vite single-page app.
 

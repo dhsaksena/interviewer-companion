@@ -30,7 +30,7 @@ const SignInDialog = ({ onClose }: { onClose: () => void }) => {
     <div className="signin-backdrop" onClick={onClose}>
       <div className="signin-dialog" role="dialog" aria-modal="true" aria-labelledby="signin-title" onClick={e => e.stopPropagation()}>
         <img src={logo} alt="" className="signin-logo" />
-        <h2 id="signin-title">Welcome to Saarthi</h2>
+        <h2 id="signin-title">Welcome to EvalNext</h2>
         <p>Sign in with your Google account to continue.</p>
         <div className="signin-button-row" aria-busy={busy}>
           <GoogleSignInButton onCredential={handleCredential} />
@@ -49,13 +49,13 @@ const LandingPage = () => {
   const closeSignIn = () => setSignInOpen(false)
 
   return (
-    <div className="saarthi-landing">
+    <div className="evalnext-landing">
 
   <header>
     <div className="container nav">
-      <a className="brand" href="#" aria-label="Saarthi home">
+      <a className="brand" href="#" aria-label="EvalNext home">
         <img src={logo} alt="" />
-        <span>Saarthi</span>
+        <span>EvalNext</span>
       </a>
       <nav className="nav-links" aria-label="Main navigation">
         <a href="#features">Features</a>
@@ -88,10 +88,10 @@ const LandingPage = () => {
           </div>
         </div>
 
-        <div className="product-window" aria-label="Preview of the Saarthi question management application">
+        <div className="product-window" aria-label="Preview of the EvalNext question management application">
           <div className="app-top">
             <img src={logo} alt="" />
-            <span>Saarthi</span><span className="dots">•••</span>
+            <span>EvalNext</span><span className="dots">•••</span>
           </div>
           <div className="app-body">
             <aside className="sidebar">
@@ -137,7 +137,7 @@ const LandingPage = () => {
         <div>
           <div className="section-kicker">Built for what's next</div>
           <h2>More than a question bank.</h2>
-          <p className="roadmap-copy">Interview question management is the beginning. Saarthi can grow into a broader toolkit to help you prepare, organize, and do your best work.</p>
+          <p className="roadmap-copy">Interview question management is the beginning. EvalNext can grow into a broader toolkit to help you prepare, organize, and do your best work.</p>
           <a className="text-link" href="#roadmap">Explore the roadmap →</a>
         </div>
         <div className="future-grid">
@@ -158,7 +158,7 @@ const LandingPage = () => {
 
     <section className="cta">
       <div className="container cta-inner">
-        <div><h2>Ready to get started?</h2><p>Join individuals and teams using Saarthi to stay organized<br className="desktop-break" /> and do their best work.</p></div>
+        <div><h2>Ready to get started?</h2><p>Join individuals and teams using EvalNext to stay organized<br className="desktop-break" /> and do their best work.</p></div>
         <div className="cta-actions"><button type="button" className="btn btn-primary" onClick={onSignIn}>Get started free →</button><button type="button" className="btn btn-outline" onClick={onSignIn}>Log in</button></div>
       </div>
     </section>
@@ -166,7 +166,7 @@ const LandingPage = () => {
 
   <footer>
     <div className="container footer-inner">
-      <a className="footer-brand" href="#"><img src={logo} alt="" /><span>Saarthi<small>Your companion for getting things done.</small></span></a>
+      <a className="footer-brand" href="#"><img src={logo} alt="" /><span>EvalNext<small>Your companion for getting things done.</small></span></a>
       <nav className="footer-links" aria-label="Footer navigation"><a href="#features">Features</a><a href="#roadmap">Roadmap</a><a href="#">Privacy</a><a href="#">Contact</a></nav>
     </div>
   </footer>
