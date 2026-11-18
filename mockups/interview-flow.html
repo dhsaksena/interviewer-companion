@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Interviews – UI mockup</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --accent:#2f6bff;--accent-hover:#1f56dc;--accent-soft:#eaf0ff;
+    --ink:#1c2333;--ink-2:#4b5468;--ink-3:#6b7385;--line:#e4e7ee;--line-strong:#cfd4df;
+    --surface:#fff;--surface-2:#f6f7fa;--page:#f1f3f8;
+    --nav-bg:#161d2b;--nav-line:#263146;--nav-text:#b4bccd;
+    --easy:#1f9d55;--easy-bg:#e6f6ec;--medium:#b7791f;--medium-bg:#fdf3dc;--hard:#d64545;--hard-bg:#fdeaea;
+    --radius:10px;--radius-sm:6px;--shadow-sm:0 1px 2px rgba(20,28,45,.06);--shadow-md:0 6px 18px rgba(20,28,45,.14);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--page);display:flex;min-height:100vh}
+  aside{width:220px;background:var(--nav-bg);color:var(--nav-text);padding:18px 12px;flex-shrink:0}
+  aside .logo{color:#fff;font-weight:700;font-size:16px;padding:4px 10px 18px}
+  aside a{display:block;padding:9px 12px;border-radius:var(--radius-sm);color:var(--nav-text);text-decoration:none;cursor:pointer;margin-bottom:2px}
+  aside a.active{background:var(--nav-line);color:#fff}
+  aside a.new{border:1px dashed var(--nav-line);margin-top:14px}
+  main{flex:1;padding:28px 36px;max-width:1360px;min-width:0}
+  h1{font-size:22px;margin:0}
+  .crumbs{color:var(--ink-3);font-size:12px;margin-bottom:6px}
+  .crumbs a{color:var(--accent);cursor:pointer}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+  .sub{color:var(--ink-3);margin-top:2px}
+  .btn{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:var(--radius-sm);cursor:pointer;font:inherit}
+  .btn:hover{background:var(--surface-2)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-hover)}
+  .btn.danger{color:var(--hard);border-color:#f0c2c2}
+  .btn.danger:hover{background:var(--hard-bg)}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  .btn.link{border:none;background:none;color:var(--accent);padding:4px 6px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+  .view{display:none}.view.active{display:block}
+  /* list */
+  .toolbar{display:flex;gap:10px;margin-bottom:14px}
+  input,textarea,select{font:inherit;color:inherit;border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:8px 10px;background:#fff;width:100%}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  textarea{resize:vertical;min-height:64px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+  .iv{padding:16px;cursor:pointer;transition:.15s}
+  .iv:hover{box-shadow:var(--shadow-md);border-color:var(--line-strong)}
+  .iv h3{margin:0 0 4px;font-size:16px}
+  .iv .meta{display:flex;gap:14px;color:var(--ink-3);font-size:12px;margin-top:12px}
+  .iv .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent)}
+  .chip.easy{background:var(--easy-bg);color:var(--easy)}.chip.medium{background:var(--medium-bg);color:var(--medium)}.chip.hard{background:var(--hard-bg);color:var(--hard)}
+  .chip.gray{background:var(--surface-2);color:var(--ink-3)}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:12px;color:var(--ink-3);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);cursor:pointer;user-select:none;white-space:nowrap}
+  th.nosort{cursor:default}
+  th .arr{color:var(--accent)}
+  td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tbody tr{cursor:pointer}tbody tr:hover{background:var(--surface-2)}
+  tbody tr:last-child td{border-bottom:none}
+  td.title{font-weight:600}td.title small{display:block;font-weight:400;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px}
+  td.num,th.num{text-align:center}
+  td.act{text-align:right;white-space:nowrap}
+  .split{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+  tbody tr.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+  .preview{position:sticky;top:20px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;overflow:hidden}
+  .preview .ph{padding:16px 18px;border-bottom:1px solid var(--line)}
+  .preview .ph h3{margin:0 0 2px;font-size:16px}
+  .preview .pb{padding:14px 18px;overflow:auto;flex:1}
+  .preview .pf{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px}
+  .preview .pf .btn{flex:1}
+  .pr{margin-bottom:14px}
+  .pr b{display:block;font-size:13px}
+  .pr p{margin:2px 0 6px;color:var(--ink-2);font-size:13px}
+  .pr .qrow{font-size:12px;padding:4px 8px}
+  .pempty{padding:50px 24px;text-align:center;color:var(--ink-3)}
+  .pager{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12px}
+  .pager div{display:flex;gap:6px;align-items:center}
+  .empty{text-align:center;padding:60px 20px;color:var(--ink-3)}
+  /* builder */
+  .layout{display:grid;grid-template-columns:1fr 260px;gap:18px;align-items:start}
+  .field{margin-bottom:14px}
+  label{display:block;font-weight:600;font-size:12px;color:var(--ink-2);margin-bottom:4px}
+  .panel{padding:18px;margin-bottom:16px}
+  .rubric{padding:14px 16px;margin-bottom:12px;position:relative}
+  .rubric .top{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+  .rubric .num{background:var(--accent-soft);color:var(--accent);font-weight:700;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-size:12px}
+  .rubric .tools{margin-left:auto;display:flex;gap:2px}
+  .qs{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .qrow{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 10px}
+  .qrow .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qrow .x{cursor:pointer;color:var(--ink-3);border:none;background:none;font-size:16px}
+  .addq{margin-top:8px}
+  .add-rubric{width:100%;padding:14px;border:2px dashed var(--line-strong);background:transparent;color:var(--accent);font-weight:600;border-radius:var(--radius);cursor:pointer}
+  .add-rubric:hover{background:var(--accent-soft)}
+  .side{padding:16px;position:sticky;top:20px}
+  .side h4{margin:0 0 10px;font-size:13px}
+  .side .row{display:flex;justify-content:space-between;color:var(--ink-2);margin-bottom:6px}
+  .side .actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .hint{color:var(--ink-3);font-size:12px}
+  /* detail */
+  .dr{padding:16px;margin-bottom:12px}
+  .dr h3{margin:0 0 4px;font-size:15px}
+  .dr p{margin:0;color:var(--ink-2);white-space:pre-wrap}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(20,28,45,.5);display:none;place-items:center;z-index:10}
+  .overlay.open{display:grid}
+  .modal{background:#fff;border-radius:var(--radius);width:620px;max-width:94vw;max-height:84vh;display:flex;flex-direction:column;box-shadow:var(--shadow-md)}
+  .modal header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal header h3{margin:0;font-size:16px}
+  .modal .body{padding:14px 18px;overflow:auto}
+  .modal footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .pick{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer}
+  .pick:hover{background:var(--surface-2)}
+  .pick input{width:auto}
+  .pick .t{flex:1}
+  .filters{display:flex;gap:8px;margin-bottom:12px}
+  .toast{position:fixed;bottom:22px;right:22px;background:var(--nav-bg);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);opacity:0;transform:translateY(10px);transition:.25s;z-index:20}
+  .toast.show{opacity:1;transform:none}
+  .note{position:fixed;left:232px;bottom:12px;font-size:11px;color:var(--ink-3)}
+</style>
+</head>
+<body>
+<aside>
+  <div class="logo">EvalNext</div>
+  <a>Home</a>
+  <a>Questions</a>
+  <a class="active" id="nav-iv" onclick="go('list')">Interviews <span class="chip" style="background:#263146;color:#fff;margin-left:4px">NEW</span></a>
+  <a class="new" onclick="newInterview()">+ New interview</a>
+</aside>
+
+<main>
+  <!-- ========== LIST ========== -->
+  <section class="view active" id="v-list">
+    <div class="head">
+      <div><h1>Interviews</h1><div class="sub">Rubric-based interview plans built from your question bank.</div></div>
+      <button class="btn primary" onclick="newInterview()">+ New interview</button>
+    </div>
+    <div class="toolbar">
+      <input id="search" placeholder="Search by title, candidate, notes or rubric title…" oninput="page=1;renderList()">
+      <select id="f-min" onchange="page=1;renderList()" style="width:190px"><option value="0">All interviews</option><option value="1">Has questions assigned</option><option value="-1">No questions yet</option></select>
+    </div>
+    <div class="split"><div class="card" style="overflow:hidden">
+      <table><thead><tr id="thead"></tr></thead><tbody id="list"></tbody></table>
+      <div class="pager"><span id="pg-info"></span><div><button class="btn sm" onclick="pg(-1)">‹ Prev</button><span id="pg-no"></span><button class="btn sm" onclick="pg(1)">Next ›</button></div></div>
+    </div>
+    <div class="card preview" id="preview"></div></div>
+    </section>
+
+  <!-- ========== BUILDER (create / edit) ========== -->
+  <section class="view" id="v-edit">
+    <div class="crumbs"><a onclick="go('list')">Interviews</a> / <span id="crumb-edit">New interview</span></div>
+    <div class="head">
+      <h1 id="edit-title">New interview</h1>
+    </div>
+    <div class="layout">
+      <div>
+        <div class="card panel">
+          <div style="display:grid;grid-template-columns:1fr 220px;gap:12px">
+            <div class="field"><label>Interview title *</label><input id="f-title" placeholder="e.g. Senior Backend Engineer – Round 1" oninput="syncDraft()"></div>
+            <div class="field"><label>Candidate</label><input id="f-cand" placeholder="Candidate name" oninput="syncDraft()"></div></div>
+          <div class="field" style="margin-bottom:0"><label>Notes (optional)</label><textarea id="f-notes" placeholder="Level, source, anything to remember…" oninput="syncDraft()"></textarea></div>
+        </div>
+
+        <h3 style="margin:0 0 10px">Rubrics</h3>
+        <div id="rubrics"></div>
+        <button class="add-rubric" onclick="addRubric()">+ Add rubric</button>
+      </div>
+
+      <div class="card side">
+        <h4>Summary</h4>
+        <div class="row"><span>Rubrics</span><b id="s-r">0</b></div>
+        <div class="row"><span>Questions</span><b id="s-q">0</b></div>
+        <div class="hint" id="s-warn"></div>
+        <div class="actions">
+          <button class="btn primary" onclick="saveDraft()">Save interview</button>
+          <button class="btn" onclick="go(editingId?'view':'list')">Cancel</button>
+          <button class="btn danger" id="btn-del-edit" onclick="askDelete(editingId)" style="display:none">Delete interview</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== DETAIL (read) ========== -->
+  <section class="view" id="v-view">
+    <div class="crumbs"><a onclick="go('list')">Interviews</a> / <span id="crumb-view"></span></div>
+    <div class="head">
+      <div><h1 id="view-title"></h1><div class="sub" id="view-notes"></div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="askDuplicate(viewingId)">Duplicate</button>
+        <button class="btn" onclick="editInterview(viewingId)">Edit</button>
+        <button class="btn danger" onclick="askDelete(viewingId)">Delete</button>
+      </div>
+    </div>
+    <div id="view-rubrics"></div>
+  </section>
+</main>
+
+<!-- question picker -->
+<div class="overlay" id="picker">
+  <div class="modal">
+    <header><h3>Assign questions from your bank</h3><button class="btn link" onclick="closePicker()">✕</button></header>
+    <div class="body">
+      <div class="filters">
+        <input id="p-search" placeholder="Search questions…" oninput="renderPicker()">
+        <select id="p-cat" onchange="renderPicker()" style="width:170px"></select>
+      </div>
+      <div id="p-list"></div>
+    </div>
+    <footer><span class="hint" id="p-count"></span><div style="display:flex;gap:8px"><button class="btn" onclick="closePicker()">Cancel</button><button class="btn primary" onclick="confirmPicker()">Assign</button></div></footer>
+  </div>
+</div>
+
+<!-- duplicate -->
+<div class="overlay" id="dup">
+  <div class="modal" style="width:460px">
+    <header><h3>Duplicate for another candidate</h3><button class="btn link" onclick="closeDup()">✕</button></header>
+    <div class="body">
+      <div class="field"><label>New candidate *</label><input id="d-cand" placeholder="Candidate name" onkeydown="if(event.key==='Enter')doDuplicate()"></div>
+      <div class="field"><label>Title</label><input id="d-title"></div>
+      <div class="hint" id="d-src"></div>
+    </div>
+    <footer style="justify-content:flex-end;gap:8px"><button class="btn" onclick="closeDup()">Cancel</button><button class="btn primary" onclick="doDuplicate()">Create copy</button></footer>
+  </div>
+</div>
+
+<!-- delete confirm -->
+<div class="overlay" id="confirm">
+  <div class="modal" style="width:420px">
+    <header><h3>Delete interview?</h3></header>
+    <div class="body"><span id="confirm-text"></span><div class="hint" style="margin-top:6px">Your questions in the bank are not affected.</div></div>
+    <footer style="justify-content:flex-end;gap:8px"><button class="btn" onclick="closeConfirm()">Cancel</button><button class="btn danger" onclick="doDelete()">Delete</button></footer>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="note">Mockup only – dummy data, nothing is saved after reload.</div>
+
+<script>
+// ---------- dummy data ----------
+const QUESTIONS=[
+  {id:1,title:'Explain the event loop in Node.js',cat:'JavaScript',diff:'medium'},
+  {id:2,title:'Design a URL shortener',cat:'System Design',diff:'hard'},
+  {id:3,title:'Reverse a linked list',cat:'DSA',diff:'easy'},
+  {id:4,title:'What is the difference between == and ===?',cat:'JavaScript',diff:'easy'},
+  {id:5,title:'Design a rate limiter',cat:'System Design',diff:'hard'},
+  {id:6,title:'Detect a cycle in a graph',cat:'DSA',diff:'medium'},
+  {id:7,title:'Explain database indexing and trade-offs',cat:'Databases',diff:'medium'},
+  {id:8,title:'ACID vs BASE',cat:'Databases',diff:'easy'},
+];
+let interviews=[
+  {id:1,title:'Senior Backend Engineer – Round 1',candidate:'A. Sharma',notes:'6 yrs exp',updated:'2 days ago',rubrics:[
+    {title:'System design depth',description:'Can they break a vague problem into components, estimate scale and justify trade-offs?',qs:[2,5]},
+    {title:'Data modelling',description:'Schema choices, indexing, consistency trade-offs.',qs:[7,8]},
+    {title:'Communication',description:'Clarifies requirements before diving in. Explains reasoning clearly.',qs:[]}]},
+  {id:2,title:'Frontend Intern screen',candidate:'R. Iyer',notes:'',updated:'last week',rubrics:[
+    {title:'JS fundamentals',description:'Core language knowledge.',qs:[1,4]}]},
+];
+const ROLES=['Backend Engineer','Frontend Engineer','Data Engineer','SRE','Full-Stack Engineer','QA Engineer'],RN=['Round 1','Round 2','Screen','Onsite'];
+for(let n=3;n<=30;n++){const r=ROLES[n%6];interviews.push({id:n,title:r+' – '+RN[n%4],candidate:'Candidate '+n,notes:'',updated:n<8?n+' days ago':(Math.ceil(n/7))+' weeks ago',rubrics:Array.from({length:1+n%4},(_,k)=>({title:'Rubric '+(k+1),description:'',qs:Array.from({length:n%3},(_,j)=>1+(n+j)%8)}))})}
+let selId=null;
+let sortKey='updated',sortDir=1,page=1;const PAGE=10;
+let nextIv=31, editingId=null, viewingId=null, draft=null, pickerTarget=null, pickerSel=new Set(), deleteId=null;
+const qById=id=>QUESTIONS.find(q=>q.id===id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---------- navigation ----------
+function go(v){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  if(v==='list')renderList();
+  if(v==='view')renderView();
+  window.scrollTo(0,0);
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+
+// ---------- list ----------
+const matchText=i=>[i.title,i.candidate,i.notes,...i.rubrics.map(r=>r.title)].join(' ').toLowerCase();
+const qCount=i=>i.rubrics.reduce((n,r)=>n+r.qs.length,0);
+const age=i=>{const m=/(\d+) (day|week)/.exec(i.updated);return i.updated==='just now'?0:m?(+m[1])*(m[2]==='week'?7:1):9}; // smaller = newer
+const COLS=[['title','Interview'],['candidate','Candidate'],['rubrics','Rubrics','num'],['qs','Questions','num'],['updated','Updated']];
+function sortBy(k){if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=k==='title'?1:-1}page=1;renderList()}
+function pg(d){page+=d;renderList()}
+function renderList(){
+  const s=document.getElementById('search').value.toLowerCase(),f=+document.getElementById('f-min').value;
+  let items=interviews.filter(i=>matchText(i).includes(s)&&(f===0||(f>0?qCount(i)>0:qCount(i)===0)));
+  const val={candidate:i=>(i.candidate||'').toLowerCase(),title:i=>i.title.toLowerCase(),rubrics:i=>i.rubrics.length,qs:qCount,updated:i=>-age(i)};
+  items.sort((a,b)=>{const x=val[sortKey](a),y=val[sortKey](b);return (x>y?1:x<y?-1:0)*sortDir});
+  document.getElementById('thead').innerHTML=COLS.map(([k,l,c])=>`<th class="${c||''}" ${k?`onclick="sortBy('${k}')"`:''}>${l}${k===sortKey?` <span class="arr">${sortDir>0?'▲':'▼'}</span>`:''}</th>`).join('');
+  const pages=Math.max(1,Math.ceil(items.length/PAGE));page=Math.min(page,pages);
+  const rows=items.slice((page-1)*PAGE,page*PAGE);
+  document.getElementById('list').innerHTML=rows.length?rows.map(i=>`<tr class="${i.id===selId?'sel':''}" onclick="selectIv(${i.id})" ondblclick="openInterview(${i.id})">
+      <td class="title">${esc(i.title)}<small>${rubricHit(i,s)||esc(i.notes||'No notes')}</small></td>
+      <td>${esc(i.candidate||'—')}</td>
+      <td class="num">${i.rubrics.length}</td><td class="num">${qCount(i)}</td><td class="hint">${i.updated}</td></tr>`).join('')
+    :`<tr><td colspan="5"><div class="empty"><h3>${interviews.length?'No matches':'No interviews yet'}</h3><p>Create an interview, add rubrics and attach questions from your bank.</p><button class="btn primary" onclick="newInterview()">+ New interview</button></div></td></tr>`;
+  document.getElementById('pg-info').textContent=items.length?`${(page-1)*PAGE+1}–${Math.min(page*PAGE,items.length)} of ${items.length}`:'0 results';
+  document.getElementById('pg-no').textContent=`Page ${page} / ${pages}`;
+  renderPreview();
+}
+function rubricHit(i,s){
+  if(!s||[i.title,i.candidate,i.notes].join(' ').toLowerCase().includes(s))return '';
+  const r=i.rubrics.find(r=>r.title.toLowerCase().includes(s));
+  return r?`<span style="color:var(--accent)">Rubric match: ${esc(r.title)}</span>`:'';
+}
+function selectIv(id){selId=selId===id?null:id;renderList()}
+function renderPreview(){
+  const el=document.getElementById('preview'),i=interviews.find(x=>x.id===selId);
+  if(!i){el.innerHTML='<div class="pempty"><div style="font-size:28px">👈</div><b>Select an interview</b><div class="hint">to preview its rubrics and questions here</div></div>';return}
+  el.innerHTML=`<div class="ph"><h3>${esc(i.title)}</h3><div class="hint">👤 ${esc(i.candidate||'No candidate')}${i.notes?' · '+esc(i.notes):''} · Updated ${i.updated}</div></div>
+    <div class="pb">${i.rubrics.map((r,n)=>`<div class="pr"><b>${n+1}. ${esc(r.title)}</b>${r.description?`<p>${esc(r.description)}</p>`:''}
+      <div class="qs">${r.qs.length?r.qs.map(id=>{const q=qById(id);return `<div class="qrow"><span class="chip ${q.diff}">${q.diff}</span><span class="t">${esc(q.title)}</span></div>`}).join(''):'<div class="hint">No questions assigned</div>'}</div></div>`).join('')}</div>
+    <div class="pf"><button class="btn primary" onclick="openInterview(${i.id})">Open</button><button class="btn" onclick="editInterview(${i.id})">Edit</button><button class="btn" onclick="askDuplicate(${i.id})">Duplicate</button><button class="btn danger" onclick="askDelete(${i.id})">Delete</button></div>`;
+}
+
+// ---------- create / edit ----------
+function newInterview(){
+  editingId=null;
+  draft={title:'',candidate:'',notes:'',rubrics:[{title:'',description:'',qs:[]}]};
+  openEditor('New interview');
+}
+function editInterview(id){
+  editingId=id;
+  draft=JSON.parse(JSON.stringify(interviews.find(i=>i.id===id)));
+  openEditor('Edit interview');
+}
+function openEditor(label){
+  document.getElementById('edit-title').textContent=label;
+  document.getElementById('crumb-edit').textContent=label;
+  document.getElementById('f-title').value=draft.title;document.getElementById('f-cand').value=draft.candidate||'';
+  document.getElementById('f-notes').value=draft.notes;
+  document.getElementById('btn-del-edit').style.display=editingId?'block':'none';
+  go('edit');renderRubrics();
+}
+function syncDraft(){draft.title=document.getElementById('f-title').value;draft.candidate=document.getElementById('f-cand').value;draft.notes=document.getElementById('f-notes').value}
+function addRubric(){draft.rubrics.push({title:'',description:'',qs:[]});renderRubrics();
+  const t=document.querySelectorAll('.r-title');t[t.length-1].focus()}
+function rmRubric(i){draft.rubrics.splice(i,1);renderRubrics()}
+function moveRubric(i,d){const j=i+d;if(j<0||j>=draft.rubrics.length)return;[draft.rubrics[i],draft.rubrics[j]]=[draft.rubrics[j],draft.rubrics[i]];renderRubrics()}
+function setR(i,k,v){draft.rubrics[i][k]=v}
+function rmQ(i,qid){draft.rubrics[i].qs=draft.rubrics[i].qs.filter(x=>x!==qid);renderRubrics()}
+
+function renderRubrics(){
+  document.getElementById('rubrics').innerHTML=draft.rubrics.map((r,i)=>`
+    <div class="card rubric">
+      <div class="top"><span class="num">${i+1}</span>
+        <input class="r-title" placeholder="Rubric title, e.g. System design depth" value="${esc(r.title)}" oninput="setR(${i},'title',this.value)">
+        <span class="tools">
+          <button class="btn link" title="Move up" onclick="moveRubric(${i},-1)">↑</button>
+          <button class="btn link" title="Move down" onclick="moveRubric(${i},1)">↓</button>
+          <button class="btn link" title="Remove rubric" style="color:var(--hard)" onclick="rmRubric(${i})">🗑</button>
+        </span></div>
+      <textarea placeholder="Description – what does a good answer look like? What are you evaluating?" oninput="setR(${i},'description',this.value)">${esc(r.description)}</textarea>
+      <div class="qs">${r.qs.map(id=>{const q=qById(id);return `<div class="qrow"><span class="chip ${q.diff}">${q.diff}</span><span class="t">${esc(q.title)}</span><span class="chip gray">${q.cat}</span><button class="x" title="Unassign" onclick="rmQ(${i},${id})">✕</button></div>`}).join('')}</div>
+      <button class="btn sm addq" onclick="openPicker(${i})">+ Assign question${r.qs.length?'s':''}</button>
+    </div>`).join('');
+  const qc=draft.rubrics.reduce((n,r)=>n+r.qs.length,0);
+  document.getElementById('s-r').textContent=draft.rubrics.length;
+  document.getElementById('s-q').textContent=qc;
+  document.getElementById('s-warn').textContent=draft.rubrics.some(r=>!r.title.trim())?'Every rubric needs a title.':'';
+}
+function saveDraft(){
+  syncDraft();
+  if(!draft.title.trim()){toast('Give the interview a title');document.getElementById('f-title').focus();return}
+  if(draft.rubrics.some(r=>!r.title.trim())){toast('Every rubric needs a title');return}
+  draft.updated='just now';
+  if(editingId){const i=interviews.findIndex(x=>x.id===editingId);draft.id=editingId;interviews[i]=draft}
+  else{draft.id=nextIv++;interviews.unshift(draft)}
+  viewingId=draft.id;toast('Interview saved');go('view');
+}
+
+// ---------- detail ----------
+function openInterview(id){viewingId=id;go('view')}
+function renderView(){
+  const i=interviews.find(x=>x.id===viewingId);if(!i)return go('list');
+  document.getElementById('crumb-view').textContent=i.title;
+  document.getElementById('view-title').textContent=i.title;
+  document.getElementById('view-notes').textContent=[i.candidate&&'👤 '+i.candidate,i.notes].filter(Boolean).join(' · ');
+  document.getElementById('view-rubrics').innerHTML=i.rubrics.map((r,n)=>`
+    <div class="card dr"><h3><span class="chip" style="margin-right:6px">${n+1}</span>${esc(r.title)}</h3>
+      <p>${esc(r.description)||'<span class="hint">No description</span>'}</p>
+      <div class="qs">${r.qs.length?r.qs.map(id=>{const q=qById(id);return `<div class="qrow"><span class="chip ${q.diff}">${q.diff}</span><span class="t">${esc(q.title)}</span><span class="chip gray">${q.cat}</span><button class="btn sm link" onclick="toast('Opens the existing question page')">View ↗</button></div>`}).join(''):'<div class="hint">No questions assigned</div>'}</div>
+    </div>`).join('');
+}
+let dupSrc=null;
+function askDuplicate(id){
+  dupSrc=id;const i=interviews.find(x=>x.id===id);
+  document.getElementById('d-title').value=i.title;
+  document.getElementById('d-cand').value='';
+  document.getElementById('d-src').textContent='Copies all '+i.rubrics.length+' rubrics and '+qCount(i)+' assigned questions from “'+i.title+'”'+(i.candidate?' ('+i.candidate+')':'')+'.';
+  document.getElementById('dup').classList.add('open');document.getElementById('d-cand').focus();
+}
+function closeDup(){document.getElementById('dup').classList.remove('open')}
+function doDuplicate(){
+  const cand=document.getElementById('d-cand').value.trim(),title=document.getElementById('d-title').value.trim();
+  if(!cand){toast('Enter the new candidate’s name');return}
+  if(!title){toast('Title can’t be empty');return}
+  const c=JSON.parse(JSON.stringify(interviews.find(x=>x.id===dupSrc)));
+  Object.assign(c,{id:nextIv++,title,candidate:cand,notes:'',updated:'just now'});
+  interviews.unshift(c);viewingId=selId=c.id;closeDup();toast('Created interview for '+cand);
+  document.getElementById('v-view').classList.contains('active')?go('view'):go('list');
+}
+
+// ---------- question picker ----------
+function openPicker(i){
+  pickerTarget=i;pickerSel=new Set(draft.rubrics[i].qs);
+  const cats=['All categories',...new Set(QUESTIONS.map(q=>q.cat))];
+  document.getElementById('p-cat').innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('p-search').value='';
+  document.getElementById('picker').classList.add('open');renderPicker();
+}
+function renderPicker(){
+  const s=document.getElementById('p-search').value.toLowerCase(),c=document.getElementById('p-cat').value;
+  document.getElementById('p-list').innerHTML=QUESTIONS.filter(q=>q.title.toLowerCase().includes(s)&&(c==='All categories'||q.cat===c)).map(q=>`
+    <label class="pick"><input type="checkbox" ${pickerSel.has(q.id)?'checked':''} onchange="togglePick(${q.id})">
+      <span class="t">${esc(q.title)}</span><span class="chip gray">${q.cat}</span><span class="chip ${q.diff}">${q.diff}</span></label>`).join('')||'<div class="empty">No questions match</div>';
+  document.getElementById('p-count').textContent=pickerSel.size+' selected';
+}
+function togglePick(id){pickerSel.has(id)?pickerSel.delete(id):pickerSel.add(id);document.getElementById('p-count').textContent=pickerSel.size+' selected'}
+function closePicker(){document.getElementById('picker').classList.remove('open')}
+function confirmPicker(){draft.rubrics[pickerTarget].qs=[...pickerSel];closePicker();renderRubrics()}
+
+// ---------- delete ----------
+function askDelete(id){deleteId=id;document.getElementById('confirm-text').textContent='“'+interviews.find(i=>i.id===id).title+'” and its rubrics will be permanently removed.';document.getElementById('confirm').classList.add('open')}
+function closeConfirm(){document.getElementById('confirm').classList.remove('open')}
+function doDelete(){interviews=interviews.filter(i=>i.id!==deleteId);if(selId===deleteId)selId=null;closeConfirm();toast('Interview deleted');go('list')}
+
+renderList();
+</script>
+</body>
+</html>
