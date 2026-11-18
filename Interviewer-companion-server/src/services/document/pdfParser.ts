@@ -16,6 +16,14 @@ export class PdfParser {
             throw new Error('PDF file is empty')
         }
 
+        // pdfjs instantiates DOMMatrix at load time, but it is only used for
+        // rendering. Text extraction never needs it, so a stub is enough where
+        // the native canvas polyfill is unavailable (e.g. bundled Lambda)
+        const g = globalThis as { DOMMatrix?: unknown }
+        if (!g.DOMMatrix) {
+            g.DOMMatrix = class DOMMatrix {}
+        }
+
         // Loaded on first use: pdfjs throws at import time on Node < 20.16,
         // which would otherwise stop the whole server from starting
         const { PDFParse } = await import('pdf-parse')

@@ -14,7 +14,7 @@
     "type-check": "tsc --noEmit",
     "db:init": "tsx src/database/migrate.ts",
     "bundle": "esbuild src/handler.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist-lambda/index.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\" --sourcemap --minify",
-    "package:lambda": "npm run bundle && cd dist-lambda && echo '{\"type\":\"module\"}' > package.json && zip -rq ../lambda.zip ."
+    "package:lambda": "npm run bundle && cp node_modules/pdf-parse/dist/pdf-parse/cjs/pdf.worker.mjs dist-lambda/ && cd dist-lambda && echo '{\"type\":\"module\"}' > package.json && zip -rq ../lambda.zip ."
   },
   "keywords": [
     "interview",
