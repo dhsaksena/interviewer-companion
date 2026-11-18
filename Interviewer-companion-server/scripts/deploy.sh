@@ -9,7 +9,8 @@
 set -euo pipefail
 
 FUNCTION_NAME="${FUNCTION_NAME:-interviewer-companion-api}"
-AWS_REGION="${AWS_REGION:-us-east-1}"
+AWS_REGION="${AWS_REGION:-$(aws configure get region 2>/dev/null || true)}"
+: "${AWS_REGION:?Set AWS_REGION or run aws configure}"
 export AWS_REGION
 
 ASSUME_YES=false
