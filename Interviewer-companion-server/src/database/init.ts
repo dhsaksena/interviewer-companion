@@ -159,6 +159,18 @@ export const initializeDatabase = async () => {
     await addColumnIfMissing(connection, dbName, 'interviews', 'interview_date', 'DATE NULL')
     await addColumnIfMissing(connection, dbName, 'interview_rubrics', 'rating', 'TINYINT NULL')
     await addColumnIfMissing(connection, dbName, 'interview_rubrics', 'feedback', 'TEXT NULL')
+    await runSqlFile(connection, 'rubric_sets.sql')
+    // Which rubric set an interview started from (provenance only) and which of its rubrics were imported from it
+    await addColumnIfMissing(
+      connection,
+      dbName,
+      'interviews',
+      'rubric_set_id',
+      `INT NULL,
+       ADD INDEX idx_interviews_rubric_set (rubric_set_id),
+       ADD CONSTRAINT fk_interviews_rubric_set FOREIGN KEY (rubric_set_id) REFERENCES rubric_sets(id) ON DELETE SET NULL`
+    )
+    await addColumnIfMissing(connection, dbName, 'interview_rubrics', 'is_imported', 'TINYINT(1) NOT NULL DEFAULT 0')
     await runSqlFile(connection, 'candidates.sql')
 
     const [categories] = await connection.query(

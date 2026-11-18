@@ -42,6 +42,12 @@ const parseRating = (value: unknown, label: string): number | null => {
   return value as number
 }
 
+const optionalId = (value: unknown, label: string): number | undefined => {
+  if (value === undefined || value === null) return undefined
+  if (!Number.isInteger(value) || (value as number) <= 0) throw new AppError(400, `${label} is invalid`)
+  return value as number
+}
+
 const parseBody = (body: Record<string, unknown>): InterviewInput => {
   if (!Array.isArray(body.rubrics)) throw new AppError(400, 'Rubrics must be a list')
 
@@ -51,12 +57,15 @@ const parseBody = (body: Record<string, unknown>): InterviewInput => {
     notes: text(body.notes, 'Notes', 5000),
     status: parseStatus(body.status),
     interviewDate: parseDate(body.interviewDate),
+    rubricSetId: optionalId(body.rubricSetId, 'Rubric set') ?? null,
     rubrics: body.rubrics.map((raw: Record<string, unknown>, index) => {
       const questionIds = raw.questionIds ?? []
       if (!Array.isArray(questionIds) || !questionIds.every(id => Number.isInteger(id) && id > 0)) {
         throw new AppError(400, `Rubric ${index + 1} has invalid questions`)
       }
       return {
+        id: optionalId(raw.id, `Rubric ${index + 1} id`),
+        setItemId: optionalId(raw.setItemId, `Rubric ${index + 1} set item`),
         title: text(raw.title, `Rubric ${index + 1} title`, 255, true),
         description: text(raw.description, `Rubric ${index + 1} description`, 5000),
         rating: parseRating(raw.rating, `Rubric ${index + 1}`),

@@ -12,6 +12,8 @@ export interface InterviewRubric {
   id: number
   title: string
   description: string
+  // Copied from a rubric set: title and description are locked and the rubric cannot be removed
+  isImported: boolean
   // 1-5 score and free-text feedback captured during or after the interview
   rating: number | null
   feedback: string
@@ -26,6 +28,9 @@ export interface Interview {
   status: InterviewStatus
   // YYYY-MM-DD or null
   interviewDate: string | null
+  // Rubric set this interview started from (null if none, or if the set was deleted)
+  rubricSetId: number | null
+  rubricSetName: string | null
   createdAt: Date
   updatedAt: Date
   rubrics: InterviewRubric[]
@@ -46,6 +51,12 @@ export interface InterviewSummary {
 }
 
 export interface RubricInput {
+  // Id of an existing interview rubric (update only)
+  id?: number
+  // Id of the rubric set item this rubric was imported from (create only, requires rubricSetId)
+  setItemId?: number
+  // Internal only (duplicate): never read from request bodies
+  imported?: boolean
   title: string
   description: string
   rating: number | null
@@ -59,6 +70,8 @@ export interface InterviewInput {
   notes: string
   status: InterviewStatus
   interviewDate: string | null
+  // Create only: the set whose rubrics were imported. Ignored on update, it cannot change after the first save
+  rubricSetId?: number | null
   rubrics: RubricInput[]
 }
 

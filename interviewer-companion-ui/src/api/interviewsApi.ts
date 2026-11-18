@@ -54,6 +54,7 @@ export const toInterviewInput = (interview: Interview): InterviewInput => ({
   status: interview.status,
   interviewDate: interview.interviewDate,
   rubrics: interview.rubrics.map(r => ({
+    id: r.id,
     title: r.title,
     description: r.description,
     rating: r.rating,

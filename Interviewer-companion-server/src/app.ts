@@ -14,6 +14,7 @@ import categoriesRouter from './routes/categories.js'
 import subcategoriesRouter from './routes/subcategories.js'
 import interviewsRouter from './routes/interviews.js'
 import candidatesRouter from './routes/candidates.js'
+import rubricSetsRouter from './routes/rubricSets.js'
 
 const app = express()
 
@@ -52,6 +53,7 @@ app.use('/api/categories', requireAuth, categoriesRouter)
 app.use('/api/subcategories', requireAuth, subcategoriesRouter)
 app.use('/api/interviews', requireAuth, interviewsRouter)
 app.use('/api/candidates', requireAuth, candidatesRouter)
+app.use('/api/rubric-sets', requireAuth, rubricSetsRouter)
 
 
 app.use(errorHandler)

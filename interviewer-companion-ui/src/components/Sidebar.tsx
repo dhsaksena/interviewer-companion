@@ -12,7 +12,7 @@ import {
 } from '../api/categoriesApi'
 import { NameDialog, ConfirmDialog, type NameDialogProps, type ConfirmDialogProps } from './CategoryDialogs'
 import { AiOutlineHome } from 'react-icons/ai'
-import { BsQuestionCircle, BsClipboardCheck, BsPersonBadge } from 'react-icons/bs'
+import { BsQuestionCircle, BsClipboardCheck, BsPersonBadge, BsListCheck } from 'react-icons/bs'
 import { MdKeyboardArrowRight, MdAdd, MdEdit, MdDelete, MdMenuOpen, MdMenu, MdLogout } from 'react-icons/md'
 import { useAuth } from '../auth/AuthContext'
 import logo from '../assets/saarthi-logo.png'
@@ -21,10 +21,11 @@ interface SidebarProps {
   // Name of the subcategory currently open, highlighted in the tree
   selectedCategory: string | null
   onSelectSubcategory: (subcategory: string, options?: { replace?: boolean }) => void
-  activeNav: 'home' | 'all' | 'interviews' | 'candidates' | null
+  activeNav: 'home' | 'all' | 'interviews' | 'rubric-sets' | 'candidates' | null
   onGoHome: () => void
   onShowAll: () => void
   onShowInterviews: () => void
+  onShowRubricSets: () => void
   onShowCandidates: () => void
   onSubcategoryDeleted?: (subcategory: string) => void
   // Changes whenever the page changes, so question counts stay current
@@ -51,7 +52,7 @@ const loadStoredWidth = () => {
   return stored ? clampWidth(stored) : DEFAULT_WIDTH
 }
 
-const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, activeNav, onGoHome, onShowAll, onShowInterviews, onShowCandidates, refreshToken }: SidebarProps) => {
+const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, activeNav, onGoHome, onShowAll, onShowInterviews, onShowRubricSets, onShowCandidates, refreshToken }: SidebarProps) => {
   const { user, signOut } = useAuth()
   const [categories, setCategories] = useState<CategoryRecord[]>([])
   // Keyed by category id; categories default to expanded until toggled
@@ -217,6 +218,9 @@ const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, 
           <button type="button" className={`sidebar-icon-btn ${activeNav === 'interviews' ? 'active' : ''}`} onClick={onShowInterviews} title="Interviews" aria-label="Interviews">
             <BsClipboardCheck />
           </button>
+          <button type="button" className={`sidebar-icon-btn ${activeNav === 'rubric-sets' ? 'active' : ''}`} onClick={onShowRubricSets} title="Rubric Sets" aria-label="Rubric Sets">
+            <BsListCheck />
+          </button>
           <button type="button" className={`sidebar-icon-btn ${activeNav === 'candidates' ? 'active' : ''}`} onClick={onShowCandidates} title="Candidates" aria-label="Candidates">
             <BsPersonBadge />
           </button>
@@ -234,7 +238,7 @@ const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, 
       <div className="sidebar-header">
         <div className="logo" role="link" tabIndex={0} onClick={onGoHome} onKeyDown={e => { if (e.key === 'Enter') onGoHome() }}>
           <img className="logo-img" src={logo} alt="" />
-          <span>Saarthi</span>
+          <span>EvalNext</span>
         </div>
         <button type="button" className="sidebar-icon-btn" onClick={() => setCollapsed(true)} title="Collapse sidebar" aria-label="Collapse sidebar">
           <MdMenuOpen />
@@ -253,6 +257,10 @@ const Sidebar = ({ selectedCategory, onSelectSubcategory, onSubcategoryDeleted, 
         <button type="button" className={`nav-item ${activeNav === 'interviews' ? 'active' : ''}`} onClick={onShowInterviews}>
           <span className="nav-icon"><BsClipboardCheck /></span>
           <span>Interviews</span>
+        </button>
+        <button type="button" className={`nav-item ${activeNav === 'rubric-sets' ? 'active' : ''}`} onClick={onShowRubricSets}>
+          <span className="nav-icon"><BsListCheck /></span>
+          <span>Rubric Sets</span>
         </button>
         <button type="button" className={`nav-item ${activeNav === 'candidates' ? 'active' : ''}`} onClick={onShowCandidates}>
           <span className="nav-icon"><BsPersonBadge /></span>

@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import '../styles/QuestionForm.css'
 import '../styles/Interviews.css'
-import { MdArrowUpward, MdArrowDownward, MdDelete, MdAdd, MdClose } from 'react-icons/md'
-import type { Interview, InterviewStatus, Question } from '../types'
+import { MdArrowUpward, MdArrowDownward, MdDelete, MdAdd, MdClose, MdLock } from 'react-icons/md'
+import type { Interview, InterviewStatus, Question, RubricSetSummary } from '../types'
 import PageHeader from '../components/PageHeader'
 import QuestionPicker from '../components/QuestionPicker'
+import SaveRubricSetDialog from '../components/SaveRubricSetDialog'
 import { ConfirmDialog } from '../components/CategoryDialogs'
 import { ErrorBox, LoadingState } from '../components/StateViews'
 import { useToast } from '../components/Toast'
 import { createInterview, fetchInterview, updateInterview } from '../api/interviewsApi'
+import { fetchRubricSet, fetchRubricSets } from '../api/rubricSetsApi'
 import { API_URL, apiFetch } from '../api/apiFetch'
 import { STATUSES, STATUS_LABELS } from '../utils/interviewStatus'
 import { navigate, paths, useUnsavedGuard } from '../router'
@@ -20,6 +22,12 @@ interface InterviewEditPageProps {
 
 interface RubricDraft {
   key: number
+  // Existing interview rubric (edit only)
+  id?: number
+  // Rubric set item this rubric was imported from (create only)
+  setItemId?: number
+  // Imported from a rubric set: title/description are read-only and it cannot be removed
+  isImported: boolean
   title: string
   description: string
   // Captured on the interview page; carried through here so saving an edit never wipes them
@@ -30,16 +38,16 @@ interface RubricDraft {
 
 let rubricKeyCounter = 0
 const nextRubricKey = () => rubricKeyCounter++
-const blankRubric = (): RubricDraft => ({ key: nextRubricKey(), title: '', description: '', rating: null, feedback: '', questionIds: [] })
+const blankRubric = (): RubricDraft => ({ key: nextRubricKey(), isImported: false, title: '', description: '', rating: null, feedback: '', questionIds: [] })
 
 // Everything the user can change, without the React-only keys: used to detect unsaved edits
-const snapshotOf = (fields: { title: string; candidateName: string; notes: string; status: InterviewStatus; interviewDate: string; rubrics: RubricDraft[] }) =>
+const snapshotOf = (fields: { title: string; candidateName: string; notes: string; status: InterviewStatus; interviewDate: string; rubricSetId: number | null; rubrics: RubricDraft[] }) =>
   JSON.stringify({
     ...fields,
-    rubrics: fields.rubrics.map(r => ({ title: r.title, description: r.description, rating: r.rating, feedback: r.feedback, questionIds: r.questionIds })),
+    rubrics: fields.rubrics.map(r => ({ setItemId: r.setItemId, title: r.title, description: r.description, rating: r.rating, feedback: r.feedback, questionIds: r.questionIds })),
   })
 
-const EMPTY_SNAPSHOT = snapshotOf({ title: '', candidateName: '', notes: '', status: 'draft', interviewDate: '', rubrics: [blankRubric()] })
+const EMPTY_SNAPSHOT = snapshotOf({ title: '', candidateName: '', notes: '', status: 'draft', interviewDate: '', rubricSetId: null, rubrics: [blankRubric()] })
 
 const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
   const toast = useToast()
@@ -54,6 +62,12 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState<InterviewStatus>('draft')
   const [interviewDate, setInterviewDate] = useState('')
+  const [rubricSetId, setRubricSetId] = useState<number | null>(null)
+  const [rubricSetName, setRubricSetName] = useState<string | null>(null)
+  const [availableSets, setAvailableSets] = useState<RubricSetSummary[]>([])
+  const [setsError, setSetsError] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [savingAsSet, setSavingAsSet] = useState(false)
   const [rubrics, setRubrics] = useState<RubricDraft[]>(() => (interviewId === null ? [blankRubric()] : []))
   const [baseline, setBaseline] = useState<string | null>(interviewId === null ? EMPTY_SNAPSHOT : null)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -78,6 +92,16 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
     return () => { cancelled = true }
   }, [questionsReload])
 
+  // The set can only be chosen while creating: after the first save it is fixed
+  useEffect(() => {
+    if (interviewId !== null) return
+    let cancelled = false
+    fetchRubricSets()
+      .then(sets => { if (!cancelled) setAvailableSets(sets) })
+      .catch(err => { if (!cancelled) setSetsError(err instanceof Error ? err.message : 'Failed to load rubric sets') })
+    return () => { cancelled = true }
+  }, [interviewId])
+
   useEffect(() => {
     if (interviewId === null) return
     let cancelled = false
@@ -86,6 +110,8 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
         if (cancelled) return
         const drafts = interview.rubrics.map(r => ({
           key: nextRubricKey(),
+          id: r.id,
+          isImported: r.isImported,
           title: r.title,
           description: r.description,
           rating: r.rating,
@@ -99,14 +125,16 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
         setStatus(interview.status)
         setInterviewDate(date)
         setRubrics(drafts)
-        setBaseline(snapshotOf({ title: interview.title, candidateName: interview.candidateName, notes: interview.notes, status: interview.status, interviewDate: date, rubrics: drafts }))
+        setRubricSetId(interview.rubricSetId)
+        setRubricSetName(interview.rubricSetName)
+        setBaseline(snapshotOf({ title: interview.title, candidateName: interview.candidateName, notes: interview.notes, status: interview.status, interviewDate: date, rubricSetId: interview.rubricSetId, rubrics: drafts }))
       })
       .catch(err => { if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Failed to load interview') })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [interviewId, reloadKey])
 
-  const dirty = baseline !== null && snapshotOf({ title, candidateName, notes, status, interviewDate, rubrics }) !== baseline
+  const dirty = baseline !== null && snapshotOf({ title, candidateName, notes, status, interviewDate, rubricSetId, rubrics }) !== baseline
   useUnsavedGuard(dirty && !saving)
 
   const questionById = useMemo(() => new Map(questions.map(q => [q.id, q])), [questions])
@@ -131,7 +159,39 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
     updateRubric(rubric.key, { questionIds: ids })
   }
 
+  // Copies a set's rubrics in. Rubrics the user added themselves are kept; untouched blank ones are dropped.
+  // Choosing another set (or none) before the first save swaps the previously imported rubrics out.
+  const chooseRubricSet = async (value: string) => {
+    const id = value === '' ? null : Number(value)
+    setSetsError(null)
+    if (id === null) {
+      setRubricSetId(null)
+      setRubricSetName(null)
+      setRubrics(prev => {
+        const kept = prev.filter(r => !r.isImported)
+        return kept.length > 0 ? kept : [blankRubric()]
+      })
+      return
+    }
+    setImporting(true)
+    try {
+      const set = await fetchRubricSet(id)
+      const imported = set.items.map(item => ({ ...blankRubric(), setItemId: item.id, isImported: true, title: item.title, description: item.description }))
+      setRubrics(prev => [
+        ...imported,
+        ...prev.filter(r => !r.isImported && (r.title.trim() || r.description.trim() || r.questionIds.length > 0)),
+      ])
+      setRubricSetId(set.id)
+      setRubricSetName(set.name)
+    } catch (err) {
+      setSetsError(err instanceof Error ? err.message : 'Failed to import rubric set')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const removeRubric = (rubric: RubricDraft) => {
+    if (rubric.isImported) return
     // Empty rubrics go straight away; ones with content ask first
     if (rubric.questionIds.length > 0 || rubric.title.trim() || rubric.description.trim()) setRubricToRemove(rubric)
     else setRubrics(prev => prev.filter(r => r.key !== rubric.key))
@@ -153,7 +213,10 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
       notes: notes.trim(),
       status,
       interviewDate: interviewDate || null,
+      ...(interviewId === null ? { rubricSetId } : {}),
       rubrics: rubrics.map(r => ({
+        id: r.id,
+        setItemId: interviewId === null ? r.setItemId : undefined,
         title: r.title.trim(),
         description: r.description.trim(),
         rating: r.rating,
@@ -238,20 +301,40 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
               </section>
 
               <h2 className="iv-section-title">Rubrics</h2>
+              {interviewId === null && (
+                <section className="iv-card">
+                  <div className="field">
+                    <label className="field-label" htmlFor="iv-rubric-set">Start from a rubric set</label>
+                    <select id="iv-rubric-set" value={rubricSetId ?? ''} disabled={importing || saving} onChange={e => { void chooseRubricSet(e.target.value) }}>
+                      <option value="">None – add rubrics manually</option>
+                      {availableSets.map(set => <option key={set.id} value={set.id}>{set.name}{set.role ? ` · ${set.role}` : ''} ({set.rubricCount})</option>)}
+                    </select>
+                    <span className="iv-muted">Its rubrics are copied into this interview and can't be removed or reworded. You can still add your own.</span>
+                    {setsError && <span className="field-error">{setsError}</span>}
+                  </div>
+                </section>
+              )}
+              {interviewId !== null && rubricSetName && (
+                <p className="iv-muted">Started from rubric set: <strong>{rubricSetName}</strong></p>
+              )}
               {rubrics.map((rubric, index) => (
                 <section key={rubric.key} className="iv-card">
                   <div className="iv-rubric-head">
                     <span className="iv-num">{index + 1}</span>
                     <input type="text" value={rubric.title} maxLength={255} aria-label={`Rubric ${index + 1} title`}
+                      readOnly={rubric.isImported}
                       className={`iv-rubric-title ${submitted && rubric.title.trim() === '' ? 'invalid' : ''}`}
                       placeholder="Rubric title, e.g. System design depth"
                       onChange={e => updateRubric(rubric.key, { title: e.target.value })} />
                     <button type="button" className="icon-btn" onClick={() => moveRubric(index, -1)} disabled={index === 0} title="Move rubric up" aria-label="Move rubric up"><MdArrowUpward /></button>
                     <button type="button" className="icon-btn" onClick={() => moveRubric(index, 1)} disabled={index === rubrics.length - 1} title="Move rubric down" aria-label="Move rubric down"><MdArrowDownward /></button>
-                    <button type="button" className="icon-btn danger" onClick={() => removeRubric(rubric)} title="Remove rubric" aria-label="Remove rubric"><MdDelete /></button>
+                    {rubric.isImported
+                      ? <span className="iv-rubric-locked" title="Imported from a rubric set: it can't be removed or edited"><MdLock /> Imported</span>
+                      : <button type="button" className="icon-btn danger" onClick={() => removeRubric(rubric)} title="Remove rubric" aria-label="Remove rubric"><MdDelete /></button>}
                   </div>
                   {submitted && rubric.title.trim() === '' && <span className="field-error">Every rubric needs a title</span>}
                   <textarea className="iv-textarea" value={rubric.description} maxLength={5000} aria-label={`Rubric ${index + 1} description`}
+                    readOnly={rubric.isImported}
                     placeholder="Description – what does a good answer look like? What are you evaluating?"
                     onChange={e => updateRubric(rubric.key, { description: e.target.value })} />
 
@@ -280,10 +363,14 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
               <button type="button" className="iv-add-rubric" onClick={() => setRubrics(prev => [...prev, blankRubric()])}>
                 <MdAdd /> Add rubric
               </button>
+              <button type="button" className="breadcrumb-link" disabled={saving || rubrics.every(r => r.title.trim() === '')} onClick={() => setSavingAsSet(true)}>
+                Save these rubrics as a Rubric Set…
+              </button>
             </div>
 
             <aside className="iv-card iv-summary">
               <h3>Summary</h3>
+              {rubricSetName && <div className="iv-summary-row"><span>Rubric set</span><strong>{rubricSetName}</strong></div>}
               <div className="iv-summary-row"><span>Rubrics</span><strong>{rubrics.length}</strong></div>
               <div className="iv-summary-row"><span>Questions</span><strong>{questionCount}</strong></div>
               {dirty && <span className="iv-unsaved">● Unsaved changes</span>}
@@ -308,6 +395,15 @@ const InterviewEditPage = ({ interviewId }: InterviewEditPageProps) => {
           busyLabel="Removing..."
           onConfirm={async () => setRubrics(prev => prev.filter(r => r.key !== rubricToRemove.key))}
           onClose={() => setRubricToRemove(null)}
+        />
+      )}
+
+      {savingAsSet && (
+        <SaveRubricSetDialog
+          items={rubrics.filter(r => r.title.trim() !== '').map(r => ({ title: r.title.trim(), description: r.description.trim() }))}
+          defaultName={title.trim()}
+          onSaved={() => { setSavingAsSet(false); toast('Rubric set saved') }}
+          onClose={() => setSavingAsSet(false)}
         />
       )}
 

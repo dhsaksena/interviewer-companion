@@ -9,6 +9,7 @@ import type {
   InterviewUsage,
   ListInterviewsParams,
 } from '../types/interview.js'
+import { checkImportedOnUpdate, resolveImportedOnCreate, type SetItemRow, type StoredImportedRubric } from './interviewRubricRules.js'
 
 // Whitelisted ORDER BY expressions (sort keys come from the query string)
 const SORT_SQL = {
@@ -50,9 +51,18 @@ const toDateString = (value: Date | string | null): string | null => {
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`
 }
 
-// Replaces all rubrics (and their question links) of an interview with the given ones
-const writeRubrics = async (connection: PoolConnection, interviewId: number, input: InterviewInput) => {
-  await connection.query('DELETE FROM interview_rubrics WHERE interview_id = ?', [interviewId])
+// Writes the interview's rubrics (and their question links). Rubrics imported from a rubric set are
+// updated in place (only position, rating, feedback and questions can change); everything else is
+// replaced. `imported[i]` says whether input.rubrics[i] is an imported rubric. `existingImportedIds`
+// are the stored imported rubrics that are kept (update only).
+const writeRubrics = async (
+  connection: PoolConnection,
+  interviewId: number,
+  input: InterviewInput,
+  imported: boolean[],
+  existingImportedIds: Set<number> = new Set()
+) => {
+  await connection.query('DELETE FROM interview_rubrics WHERE interview_id = ? AND is_imported = 0', [interviewId])
 
   const questionIds = [...new Set(input.rubrics.flatMap(r => r.questionIds))]
   if (questionIds.length > 0) {
@@ -66,11 +76,22 @@ const writeRubrics = async (connection: PoolConnection, interviewId: number, inp
   }
 
   for (const [position, rubric] of input.rubrics.entries()) {
-    const [result] = await connection.query<ResultSetHeader>(
-      'INSERT INTO interview_rubrics (interview_id, title, description, position, rating, feedback) VALUES (?, ?, ?, ?, ?, ?)',
-      [interviewId, rubric.title, rubric.description, position, rubric.rating, rubric.feedback]
-    )
-    const links = [...new Set(rubric.questionIds)].map((questionId, index) => [result.insertId, questionId, index])
+    let rubricId: number
+    if (rubric.id !== undefined && existingImportedIds.has(rubric.id)) {
+      rubricId = rubric.id
+      await connection.query(
+        'UPDATE interview_rubrics SET position = ?, rating = ?, feedback = ? WHERE id = ? AND interview_id = ?',
+        [position, rubric.rating, rubric.feedback, rubricId, interviewId]
+      )
+      await connection.query('DELETE FROM rubric_questions WHERE rubric_id = ?', [rubricId])
+    } else {
+      const [result] = await connection.query<ResultSetHeader>(
+        'INSERT INTO interview_rubrics (interview_id, title, description, position, rating, feedback, is_imported) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [interviewId, rubric.title, rubric.description, position, rubric.rating, rubric.feedback, imported[position] ? 1 : 0]
+      )
+      rubricId = result.insertId
+    }
+    const links = [...new Set(rubric.questionIds)].map((questionId, index) => [rubricId, questionId, index])
     if (links.length > 0) {
       await connection.query('INSERT INTO rubric_questions (rubric_id, question_id, position) VALUES ?', [links])
     }
@@ -157,14 +178,16 @@ export class InterviewsService {
   async getById(id: number): Promise<Interview | null> {
     return withConnection(async connection => {
       const [interviews] = await connection.query<RowDataPacket[]>(
-        'SELECT id, title, candidate_name, notes, status, interview_date, created_at, updated_at FROM interviews WHERE id = ?',
+        `SELECT i.id, i.title, i.candidate_name, i.notes, i.status, i.interview_date, i.created_at, i.updated_at,
+                i.rubric_set_id, rs.name AS rubric_set_name
+         FROM interviews i LEFT JOIN rubric_sets rs ON rs.id = i.rubric_set_id WHERE i.id = ?`,
         [id]
       )
       if (interviews.length === 0) return null
       const row = interviews[0]
 
       const [rubrics] = await connection.query<RowDataPacket[]>(
-        'SELECT id, title, description, rating, feedback FROM interview_rubrics WHERE interview_id = ? ORDER BY position, id',
+        'SELECT id, title, description, rating, feedback, is_imported FROM interview_rubrics WHERE interview_id = ? ORDER BY position, id',
         [id]
       )
       const [links] = rubrics.length
@@ -185,12 +208,15 @@ export class InterviewsService {
         notes: row.notes ?? '',
         status: row.status as InterviewStatus,
         interviewDate: toDateString(row.interview_date),
+        rubricSetId: row.rubric_set_id ?? null,
+        rubricSetName: row.rubric_set_name ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         rubrics: rubrics.map(rubric => ({
           id: rubric.id,
           title: rubric.title,
           description: rubric.description ?? '',
+          isImported: Boolean(rubric.is_imported),
           rating: rubric.rating ?? null,
           feedback: rubric.feedback ?? '',
           questions: links
@@ -201,13 +227,34 @@ export class InterviewsService {
     })
   }
 
-  async create(input: InterviewInput): Promise<Interview> {
+  // `trusted` is only for server-side copies (duplicate), where imported flags come from an existing interview
+  async create(input: InterviewInput, trusted = false): Promise<Interview> {
     const id = await inTransaction(async connection => {
+      let imported: boolean[]
+      let rubricSetId: number | null = null
+      if (trusted) {
+        imported = input.rubrics.map(r => Boolean(r.imported))
+        rubricSetId = input.rubricSetId ?? null
+      } else {
+        let items: SetItemRow[] | null = null
+        if (input.rubricSetId) {
+          const [setRows] = await connection.query<RowDataPacket[]>('SELECT id FROM rubric_sets WHERE id = ?', [input.rubricSetId])
+          if (setRows.length === 0) throw new AppError(400, 'The selected rubric set no longer exists')
+          const [itemRows] = await connection.query<RowDataPacket[]>(
+            'SELECT id, title, description FROM rubric_set_items WHERE rubric_set_id = ? ORDER BY position, id',
+            [input.rubricSetId]
+          )
+          items = itemRows.map(row => ({ id: row.id, title: row.title, description: row.description ?? '' }))
+          rubricSetId = input.rubricSetId
+        }
+        imported = resolveImportedOnCreate(input.rubrics, items)
+      }
+
       const [result] = await connection.query<ResultSetHeader>(
-        'INSERT INTO interviews (title, candidate_name, notes, status, interview_date) VALUES (?, ?, ?, ?, ?)',
-        [input.title, input.candidateName, input.notes, input.status, input.interviewDate]
+        'INSERT INTO interviews (title, candidate_name, notes, status, interview_date, rubric_set_id) VALUES (?, ?, ?, ?, ?, ?)',
+        [input.title, input.candidateName, input.notes, input.status, input.interviewDate, rubricSetId]
       )
-      await writeRubrics(connection, result.insertId, input)
+      await writeRubrics(connection, result.insertId, input, imported)
       return result.insertId
     })
     return (await this.getById(id))!
@@ -215,12 +262,22 @@ export class InterviewsService {
 
   async update(id: number, input: InterviewInput): Promise<Interview | null> {
     const found = await inTransaction(async connection => {
-      const [result] = await connection.query<ResultSetHeader>(
+      const [locked] = await connection.query<RowDataPacket[]>('SELECT id FROM interviews WHERE id = ? FOR UPDATE', [id])
+      if (locked.length === 0) return false
+
+      // Rubrics imported from a rubric set must survive unchanged (title, description) and cannot be removed
+      const [storedRows] = await connection.query<RowDataPacket[]>(
+        'SELECT id, title, description FROM interview_rubrics WHERE interview_id = ? AND is_imported = 1',
+        [id]
+      )
+      const stored: StoredImportedRubric[] = storedRows.map(row => ({ id: row.id, title: row.title, description: row.description ?? '' }))
+      const keptIds = checkImportedOnUpdate(input.rubrics, stored)
+
+      await connection.query(
         'UPDATE interviews SET title = ?, candidate_name = ?, notes = ?, status = ?, interview_date = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [input.title, input.candidateName, input.notes, input.status, input.interviewDate, id]
       )
-      if (result.affectedRows === 0) return false
-      await writeRubrics(connection, id, input)
+      await writeRubrics(connection, id, input, input.rubrics.map(r => r.id !== undefined && keptIds.has(r.id)), keptIds)
       return true
     })
     return found ? this.getById(id) : null
@@ -244,15 +301,17 @@ export class InterviewsService {
       notes: '',
       status: 'draft',
       interviewDate: null,
+      rubricSetId: source.rubricSetId,
       // Ratings and feedback belong to the original candidate, so the copy starts blank
       rubrics: source.rubrics.map(rubric => ({
         title: rubric.title,
         description: rubric.description,
+        imported: rubric.isImported,
         rating: null,
         feedback: '',
         questionIds: rubric.questions.map(q => q.id),
       })),
-    })
+    }, true)
   }
 
   // Interviews that have the question assigned to any rubric

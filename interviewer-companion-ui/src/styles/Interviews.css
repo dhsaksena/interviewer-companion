@@ -262,3 +262,12 @@
   .iv-textarea { border: 1px solid #999; }
   .status-select { appearance: none; border: none; }
 }
+
+/* Rubric sets */
+.rs-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.rs-card-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; align-items: flex-start; }
+.rs-usage { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.rs-usage-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px; text-align: left; background: none; border: 1px solid var(--border, #ddd); border-radius: 6px; cursor: pointer; }
+.rs-usage-title { font-weight: 600; }
+.iv-rubric-locked { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; opacity: 0.8; }
+.iv-rubric-title[readonly], .iv-textarea[readonly] { background: var(--surface-muted, rgba(127, 127, 127, 0.1)); cursor: default; }

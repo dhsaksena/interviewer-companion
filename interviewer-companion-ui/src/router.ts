@@ -13,6 +13,9 @@ export type Route =
   | { name: 'interview-new' }
   | { name: 'interview-view'; id: number }
   | { name: 'interview-edit'; id: number }
+  | { name: 'rubric-sets' }
+  | { name: 'rubric-set-new' }
+  | { name: 'rubric-set-edit'; id: number }
   | { name: 'candidates' }
   | { name: 'candidate-view'; id: number; view: CandidateView }
 
@@ -35,6 +38,9 @@ export const paths = {
   interviewNew: () => '/interviews/new',
   interviewView: (id: number) => `/interviews/${id}`,
   interviewEdit: (id: number) => `/interviews/${id}/edit`,
+  rubricSets: () => '/rubric-sets',
+  rubricSetNew: () => '/rubric-sets/new',
+  rubricSetEdit: (id: number) => `/rubric-sets/${id}/edit`,
   candidates: () => '/candidates',
   candidateView: (id: number, view: CandidateView = 'graph') => withQuery(`/candidates/${id}`, { view: view === 'graph' ? null : view }),
 }
@@ -57,6 +63,11 @@ export const parseRoute = (path: string): Route => {
     if (parts[1] === 'new') return { name: 'interview-new' }
     if (validId && parts.length === 2) return { name: 'interview-view', id }
     if (validId && parts[2] === 'edit') return { name: 'interview-edit', id }
+  }
+  if (parts[0] === 'rubric-sets') {
+    if (parts.length === 1) return { name: 'rubric-sets' }
+    if (parts[1] === 'new') return { name: 'rubric-set-new' }
+    if (validId && parts[2] === 'edit') return { name: 'rubric-set-edit', id }
   }
   if (parts[0] === 'candidates') {
     if (parts.length === 1) return { name: 'candidates' }

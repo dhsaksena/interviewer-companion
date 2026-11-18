@@ -48,6 +48,8 @@ export interface InterviewRubric {
   id: number
   title: string
   description: string
+  // Copied from a rubric set: title/description are locked and it cannot be removed
+  isImported: boolean
   rating: number | null
   feedback: string
   questions: InterviewQuestionRef[]
@@ -60,6 +62,8 @@ export interface Interview {
   notes: string
   status: InterviewStatus
   interviewDate: string | null
+  rubricSetId: number | null
+  rubricSetName: string | null
   createdAt: string
   updatedAt: string
   rubrics: InterviewRubric[]
@@ -79,6 +83,9 @@ export interface InterviewSummary {
 }
 
 export interface RubricInput {
+  // Existing interview rubric (edit) and the rubric set item it was imported from (create)
+  id?: number
+  setItemId?: number
   title: string
   description: string
   rating: number | null
@@ -92,6 +99,8 @@ export interface InterviewInput {
   notes: string
   status: InterviewStatus
   interviewDate: string | null
+  // Create only: the rubric set the interview started from
+  rubricSetId?: number | null
   rubrics: RubricInput[]
 }
 
@@ -213,4 +222,41 @@ export interface DeepDiveResult {
   warnings: string[]
   placeholder: boolean
   completedAt: string
+}
+
+export interface RubricSetItem {
+  id: number
+  title: string
+  description: string
+}
+
+export interface RubricSetSummary {
+  id: number
+  name: string
+  role: string
+  description: string
+  updatedAt: string
+  rubricCount: number
+  interviewCount: number
+  completedInterviewCount: number
+  lastUsedAt: string | null
+}
+
+export interface RubricSet extends RubricSetSummary {
+  items: RubricSetItem[]
+}
+
+export interface RubricSetInput {
+  name: string
+  role: string
+  description: string
+  items: { title: string; description: string }[]
+}
+
+export interface RubricSetInterviewRef {
+  id: number
+  title: string
+  candidateName: string
+  status: InterviewStatus
+  interviewDate: string | null
 }

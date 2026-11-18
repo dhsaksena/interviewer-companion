@@ -9,6 +9,8 @@ import QuestionViewPage from './pages/QuestionViewPage'
 import InterviewsPage from './pages/InterviewsPage'
 import InterviewViewPage from './pages/InterviewViewPage'
 import InterviewEditPage from './pages/InterviewEditPage'
+import RubricSetsPage from './pages/RubricSetsPage'
+import RubricSetEditPage from './pages/RubricSetEditPage'
 import CandidatesPage from './pages/CandidatesPage'
 import CandidateViewPage from './pages/CandidateViewPage'
 import HomePage from './pages/HomePage'
@@ -48,6 +50,7 @@ function MainApp()
   const activeNav = route.name === 'home' ? 'home'
     : route.name === 'questions' && !route.sub ? 'all'
     : route.name.startsWith('interview') ? 'interviews'
+    : route.name.startsWith('rubric-set') ? 'rubric-sets'
     : route.name.startsWith('candidate') ? 'candidates'
     : null
 
@@ -64,6 +67,7 @@ function MainApp()
         onGoHome={() => navigate(paths.home())}
         onShowAll={() => navigate(paths.questions())}
         onShowInterviews={() => navigate(paths.interviews())}
+        onShowRubricSets={() => navigate(paths.rubricSets())}
         onShowCandidates={() => navigate(paths.candidates())}
       />
 
@@ -76,6 +80,9 @@ function MainApp()
       {route.name === 'interview-new' && <InterviewEditPage key="new" interviewId={null} />}
       {route.name === 'interview-view' && <InterviewViewPage key={route.id} interviewId={route.id} />}
       {route.name === 'interview-edit' && <InterviewEditPage key={route.id} interviewId={route.id} />}
+      {route.name === 'rubric-sets' && <RubricSetsPage />}
+      {route.name === 'rubric-set-new' && <RubricSetEditPage key="new" rubricSetId={null} />}
+      {route.name === 'rubric-set-edit' && <RubricSetEditPage key={route.id} rubricSetId={route.id} />}
       {route.name === 'candidates' && <CandidatesPage />}
       {route.name === 'candidate-view' && <CandidateViewPage key={route.id} candidateId={route.id} view={route.view} />}
 
